@@ -1,0 +1,10 @@
+{
+  "name": "Tao — a quiet place to reflect",
+  "short_name": "Tao",
+  "description": "A meditative space grounded in Taoism for reflection, breathing, and stillness.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "icons": []
+}
