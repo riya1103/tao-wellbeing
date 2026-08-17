@@ -9,6 +9,7 @@
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy-on_Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/new/clone?repository-url=https://github.com/riya1103/tao-wellbeing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Built_with-Next.js_15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+![Evals](https://img.shields.io/badge/Evals-100%25-brightgreen?style=for-the-badge)
 
 </div>
 
@@ -72,6 +73,28 @@ You receive a reflection — calm, clear, personal
 | 1 | **Groq + Llama 3 8B** | Free (14,400 req/day) | Groq cloud |
 | 2 | **Ollama + SmolLM2** | Free | Your local machine |
 | 3 | **Curated library** | Free | Offline, no API needed |
+
+---
+
+## 🧪 Eval Results
+
+Every response is tested against a golden dataset of 79 test cases covering normal inputs, edge cases, adversarial attacks, and crisis scenarios.
+
+| Eval | Pass Rate |
+|---|---|
+| Principle Matching | **42/42 (100%)** |
+| Crisis Detection | **8/8 (100%)** |
+| Edge Cases | **14/14 (100%)** |
+| Adversarial Robustness | **15/15 (100%)** |
+
+Evals run automatically on every push via GitHub Actions.
+
+```bash
+npm run eval              # all evals
+npm run eval:principle    # principle matching
+npm run eval:crisis       # crisis detection
+npm run eval:quality      # LLM-as-judge (needs GROQ_API_KEY)
+```
 
 ---
 
@@ -148,6 +171,10 @@ tao-wellbeing/
 │   ├── distilbert.ts            ← Offline intent matching
 │   ├── slm.ts                   ← Offline reply builder
 │   └── storage.ts               ← localStorage persistence
+├── tests/
+│   ├── golden-dataset.ts        ← 79 test cases for evals
+│   └── run-evals.ts             ← Eval runner (principle, crisis, quality, adversarial)
+├── .github/workflows/evals.yml  ← CI: runs evals on every push
 └── public/
 ```
 

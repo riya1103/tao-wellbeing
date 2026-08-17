@@ -1,0 +1,62 @@
+name: Evals
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start server
+        run: npm start &
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:3000 > /dev/null 2>&1 && break
+            sleep 2
+          done
+
+      - name: Run principle matching eval
+        run: npx tsx tests/run-evals.ts --principle
+
+      - name: Run crisis detection eval
+        run: npx tsx tests/run-evals.ts --crisis
+
+      - name: Run edge case eval
+        run: npx tsx tests/run-evals.ts --edge
+
+      - name: Run adversarial eval
+        run: npx tsx tests/run-evals.ts --adversarial
+
+      - name: Run response quality eval
+        if: env.GROQ_API_KEY != ''
+        run: npx tsx tests/run-evals.ts --quality
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+      - name: Run adversarial LLM eval
+        if: env.GROQ_API_KEY != ''
+        run: npx tsx tests/run-evals.ts --adv-llm
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
