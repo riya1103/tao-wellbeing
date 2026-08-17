@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Enso from "@/components/Enso";
 import FloatingElements from "@/components/FloatingElements";
 import PageTransition from "@/components/PageTransition";
+import FeedbackButton from "@/components/FeedbackButton";
 import { addJournal } from "@/lib/storage";
 
 const DELIM = "\f";
@@ -190,6 +191,13 @@ export default function ReflectPage() {
                   <p key={i}>{para}</p>
                 ))}
               </div>
+              {phase === "done" && reflection && (
+                <FeedbackButton
+                  input={issue}
+                  principle={principle}
+                  engine={engine || "offline"}
+                />
+              )}
             </section>
           )}
         </div>

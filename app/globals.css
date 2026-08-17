@@ -1104,3 +1104,94 @@ body {
     gap: 1.25rem;
   }
 }
+
+/* ── feedback ─────────────────────────────────────────────────────────────── */
+
+.feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  animation: rise 400ms ease both;
+}
+
+.feedback-label {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  opacity: 0.6;
+}
+
+.feedback-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-soft);
+  transition: border-color 300ms ease, color 300ms ease, background 300ms ease;
+  padding: 0;
+}
+
+.feedback-btn:hover {
+  border-color: var(--bamboo);
+  color: var(--bamboo);
+  background: color-mix(in srgb, var(--bamboo) 6%, transparent);
+}
+
+.feedback-thanks {
+  font-size: 0.82rem;
+  color: var(--bamboo);
+  font-style: italic;
+  margin-top: 1rem;
+  animation: rise 400ms ease both;
+}
+
+/* ── feedback export ──────────────────────────────────────────────────────── */
+
+.feedback-export {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  animation: rise var(--fade) ease both 600ms;
+}
+
+.feedback-export-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.feedback-stats {
+  margin-top: 1rem;
+  animation: rise 400ms ease both;
+}
+
+.feedback-stat-line {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 0 0 0.75rem;
+}
+
+.feedback-stat-section {
+  text-align: center;
+}
+
+.feedback-stat-heading {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  opacity: 0.6;
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.06em;
+}
+
+.feedback-stat-item {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin: 0 0 0.15rem;
+  font-family: monospace;
+}

@@ -3,6 +3,7 @@
 import JournalList from "@/components/JournalList";
 import FloatingElements from "@/components/FloatingElements";
 import PageTransition from "@/components/PageTransition";
+import FeedbackExport from "@/components/FeedbackExport";
 
 export default function JournalPage() {
   return (
@@ -13,6 +14,7 @@ export default function JournalPage() {
         <div className="center journal-center">
           <h1 className="prompt">journal</h1>
           <JournalList />
+          <FeedbackExport />
         </div>
       </main>
     </PageTransition>
