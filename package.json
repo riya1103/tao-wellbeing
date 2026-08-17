@@ -12,7 +12,9 @@
     "eval:crisis": "tsx tests/run-evals.ts --crisis",
     "eval:quality": "tsx tests/run-evals.ts --quality",
     "eval:adversarial": "tsx tests/run-evals.ts --adversarial",
-    "eval:edge": "tsx tests/run-evals.ts --edge"
+    "eval:edge": "tsx tests/run-evals.ts --edge",
+    "eval:history": "tsx tests/run-evals.ts --history",
+    "eval:fix": "tsx tests/auto-fix.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",

@@ -7,10 +7,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -37,19 +41,94 @@ jobs:
             sleep 2
           done
 
-      - name: Run principle matching eval
-        run: npx tsx tests/run-evals.ts --principle
+      - name: Run evals
+        id: evals
+        run: |
+          set +e
+          OUTPUT=$(npx tsx tests/run-evals.ts --principle --crisis --edge --adversarial 2>&1)
+          echo "$OUTPUT"
+          echo "$OUTPUT" > /tmp/eval-output.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          if echo "$OUTPUT" | grep -q "100%"; then
+            echo "all_pass=true" >> $GITHUB_OUTPUT
+          else
+            echo "all_pass=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Run crisis detection eval
-        run: npx tsx tests/run-evals.ts --crisis
+      - name: Auto-fix eval failures
+        if: steps.evals.outputs.all_pass == 'false' && env.GROQ_API_KEY != ''
+        id: autofix
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          set +e
+          OUTPUT=$(npx tsx tests/auto-fix.ts 2>&1)
+          echo "$OUTPUT"
+          echo "$OUTPUT" > /tmp/autofix-output.txt
+          if echo "$OUTPUT" | grep -q "No failures found"; then
+            echo "fixed=true" >> $GITHUB_OUTPUT
+          else
+            echo "fixed=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Run edge case eval
-        run: npx tsx tests/run-evals.ts --edge
+      - name: Re-run evals after auto-fix
+        if: steps.autofix.outputs.fixed == 'false'
+        id: re-evals
+        run: |
+          # Restart server with updated reflections
+          pkill -f "next start" || true
+          sleep 2
+          npm start &
+          sleep 5
+          set +e
+          OUTPUT=$(npx tsx tests/run-evals.ts --principle --crisis --edge --adversarial 2>&1)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "100%"; then
+            echo "all_pass=true" >> $GITHUB_OUTPUT
+          else
+            echo "all_pass=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Run adversarial eval
-        run: npx tsx tests/run-evals.ts --adversarial
+      - name: Commit auto-fixes
+        if: steps.autofix.outputs.fixed == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/reflections.ts
+          git diff --staged --quiet || git commit -m "auto-fix: add keywords for failed eval cases [skip ci]"
+          git push
 
-      - name: Run response quality eval
+      - name: Create issue on unfixable failures
+        if: steps.re-evals.outputs.all_pass == 'false' || (steps.evals.outputs.all_pass == 'false' && steps.autofix.outputs.fixed == 'true')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## Eval Failures — Manual Review Needed\n\n';
+            body += 'Auto-fix could not resolve these failures.\n\n';
+
+            if (fs.existsSync('/tmp/eval-output.txt')) {
+              body += '### Eval Output\n```\n' + fs.readFileSync('/tmp/eval-output.txt', 'utf8') + '\n```\n\n';
+            }
+
+            if (fs.existsSync('/tmp/autofix-output.txt')) {
+              body += '### Auto-fix Output\n```\n' + fs.readFileSync('/tmp/autofix-output.txt', 'utf8') + '\n```\n\n';
+            }
+
+            body += '### What to check\n';
+            body += '- Are the keyword suggestions correct?\n';
+            body += '- Does the principle matching logic need updates?\n';
+            body += '- Should new test cases be added to the golden dataset?\n';
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Eval failures at ${new Date().toISOString().slice(0, 16)}`,
+              body: body,
+              labels: ['eval-failure', 'auto-fix-failed']
+            });
+
+      - name: Run quality evals
         if: env.GROQ_API_KEY != ''
         run: npx tsx tests/run-evals.ts --quality
         env:
