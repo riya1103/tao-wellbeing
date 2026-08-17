@@ -4,18 +4,103 @@ import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompt";
 import { getDistilBertGrounding } from "@/lib/distilbert";
 import { buildSlmReply } from "@/lib/slm";
 
-// The Anthropic SDK needs Node, not the edge runtime.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// The response is a single text stream. The first line is a JSON metadata header
-// (the matched principle + which engine produced the reply), followed by a form-feed
-// delimiter (\f), then the reflection text streams token by token. The client splits
-// on the first \f. This keeps one code path for both the AI and offline engines.
 const DELIM = "\f";
+const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "smollm2";
 
 function encoder() {
   return new TextEncoder();
+}
+
+async function isOllamaAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${OLLAMA_URL}/api/tags`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function streamOllama(
+  controller: ReadableStreamDefaultController,
+  issue: string,
+  grounding: ReturnType<typeof matchReflection>,
+) {
+  const enc = encoder();
+  const header = JSON.stringify({
+    principle: grounding.principle,
+    engine: "ollama",
+  });
+  controller.enqueue(enc.encode(header + DELIM));
+
+  const prompt = buildUserPrompt(issue, grounding);
+
+  const res = await fetch(`${OLLAMA_URL}/api/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      system: SYSTEM_PROMPT,
+      prompt,
+      stream: true,
+    }),
+  });
+
+  if (!res.ok || !res.body) {
+    throw new Error(`Ollama responded with ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    // Ollama streams JSON lines: {"response":"token","done":false}
+    for (const line of chunk.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.response) {
+          controller.enqueue(enc.encode(obj.response));
+        }
+      } catch {
+        /* partial line */
+      }
+    }
+  }
+}
+
+function streamCurated(
+  controller: ReadableStreamDefaultController,
+  issue: string,
+  grounding: ReturnType<typeof matchReflection>,
+  engine: "curated" | "curated-fallback",
+) {
+  const enc = encoder();
+  const header = JSON.stringify({ principle: grounding.principle, engine });
+  controller.enqueue(enc.encode(header + DELIM));
+
+  const text = `${grounding.body}\n\n— ${grounding.line}`;
+
+  let i = 0;
+  const step = () => {
+    if (i >= text.length) {
+      controller.close();
+      return;
+    }
+    const chunk = text.slice(i, i + 4);
+    controller.enqueue(enc.encode(chunk));
+    i += 4;
+    setTimeout(step, 12);
+  };
+  step();
 }
 
 export async function POST(req: Request) {
@@ -36,11 +121,11 @@ export async function POST(req: Request) {
   }
 
   const grounding = matchReflection(issue);
-  const hasKey =
+  const hasAnthropicKey =
     !!process.env.ANTHROPIC_API_KEY || !!process.env.ANTHROPIC_AUTH_TOKEN;
 
   let localGrounding = grounding;
-  if (!hasKey) {
+  if (!hasAnthropicKey) {
     try {
       localGrounding = await getDistilBertGrounding(issue);
     } catch {
@@ -48,41 +133,30 @@ export async function POST(req: Request) {
     }
   }
 
-  const enc = encoder();
+  // Check for Ollama
+  const ollamaUp = await isOllamaAvailable();
 
-  // ---- Offline / curated path -------------------------------------------------
-  // Also the fallback when the AI path errors.
-  const streamCurated = (
-    controller: ReadableStreamDefaultController,
-    engine: "curated" | "curated-fallback" | "slm",
-  ) => {
-    const header = JSON.stringify({ principle: localGrounding.principle, engine });
-    controller.enqueue(enc.encode(header + DELIM));
-
-    const text =
-      engine === "slm"
-        ? buildSlmReply(issue, localGrounding)
-        : `${localGrounding.body}\n\n— ${localGrounding.line}`;
-
-    // Reveal a few characters at a time so the offline path feels like the AI one.
-    let i = 0;
-    const step = () => {
-      if (i >= text.length) {
-        controller.close();
-        return;
-      }
-      const chunk = text.slice(i, i + 4);
-      controller.enqueue(enc.encode(chunk));
-      i += 4;
-      setTimeout(step, 12);
-    };
-    step();
-  };
-
-  if (!hasKey) {
+  // ---- Ollama path ----
+  if (ollamaUp) {
     const stream = new ReadableStream({
-      start(controller) {
-        streamCurated(controller, "slm");
+      async start(controller) {
+        let emittedText = false;
+        try {
+          await streamOllama(controller, issue, localGrounding);
+          emittedText = true;
+          controller.close();
+        } catch (err) {
+          console.error("reflect: Ollama failed, falling back to curated:", err);
+          try {
+            if (!emittedText) {
+              const text = `${localGrounding.body}\n\n— ${localGrounding.line}`;
+              controller.enqueue(new TextEncoder().encode(text));
+            }
+            controller.close();
+          } catch {
+            /* controller may already be closed */
+          }
+        }
       },
     });
     return new Response(stream, {
@@ -90,52 +164,60 @@ export async function POST(req: Request) {
     });
   }
 
-  // ---- AI path ----------------------------------------------------------------
-  const stream = new ReadableStream({
-    async start(controller) {
-      let emittedText = false;
-      try {
-        const client = new Anthropic();
-        const header = JSON.stringify({
-          principle: grounding.principle,
-          engine: "claude",
-        });
-        controller.enqueue(enc.encode(header + DELIM));
-
-        const messageStream = client.messages.stream({
-          model: "claude-opus-4-8",
-          max_tokens: 1024,
-          thinking: { type: "adaptive" },
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: buildUserPrompt(issue, grounding) }],
-        });
-
-        messageStream.on("text", (delta) => {
-          emittedText = true;
-          controller.enqueue(enc.encode(delta));
-        });
-
-        await messageStream.finalMessage();
-        controller.close();
-      } catch (err) {
-        // If the model call fails, fall back to the curated reflection so the
-        // person always receives something. The header is already sent; only
-        // inject the curated body if the AI produced no text before failing,
-        // to avoid appending a whole second reflection onto a partial one.
-        console.error("reflect: AI path failed, serving curated fallback:", err);
+  // ---- Anthropic path ----
+  if (hasAnthropicKey) {
+    const stream = new ReadableStream({
+      async start(controller) {
+        let emittedText = false;
         try {
-          if (!emittedText) {
-            const text = `${localGrounding.body}\n\n— ${localGrounding.line}`;
-            controller.enqueue(enc.encode(text));
-          }
+          const client = new Anthropic();
+          const enc = encoder();
+          const header = JSON.stringify({
+            principle: grounding.principle,
+            engine: "claude",
+          });
+          controller.enqueue(enc.encode(header + DELIM));
+
+          const messageStream = client.messages.stream({
+            model: "claude-opus-4-8",
+            max_tokens: 1024,
+            thinking: { type: "adaptive" },
+            system: SYSTEM_PROMPT,
+            messages: [{ role: "user", content: buildUserPrompt(issue, grounding) }],
+          });
+
+          messageStream.on("text", (delta) => {
+            emittedText = true;
+            controller.enqueue(enc.encode(delta));
+          });
+
+          await messageStream.finalMessage();
           controller.close();
-        } catch {
-          /* controller may already be closed */
+        } catch (err) {
+          console.error("reflect: AI path failed, serving curated fallback:", err);
+          try {
+            if (!emittedText) {
+              const text = `${localGrounding.body}\n\n— ${localGrounding.line}`;
+              controller.enqueue(new TextEncoder().encode(text));
+            }
+            controller.close();
+          } catch {
+            /* controller may already be closed */
+          }
         }
-      }
+      },
+    });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  // ---- Curated fallback ----
+  const stream = new ReadableStream({
+    start(controller) {
+      streamCurated(controller, issue, localGrounding, "curated");
     },
   });
-
   return new Response(stream, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
