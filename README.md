@@ -25,9 +25,19 @@ It's a calm, minimal space where you can say what's on your mind and receive a t
 
 ---
 
-## ✨ What's Inside
+## Product Principles
 
-<br>
+| Principle | What it means |
+|---|---|
+| **Privacy first** | No accounts, no databases, no analytics. Everything lives in localStorage. |
+| **AI with guardrails** | Free LLM (Groq + Llama 3) generates responses, but a curated library ensures quality even offline. |
+| **Continuous improvement** | User feedback flows back into the golden dataset. Evals run on every push. |
+| **Accessible** | Works offline, supports screen readers, respects reduced-motion preferences. |
+| **Free forever** | No paid APIs required. Groq free tier covers 14,400 req/day. |
+
+---
+
+## ✨ What's Inside
 
 > **Reflect** — Type what troubles you. Receive a calm, grounded response
 > powered by Taoist principles — explained in plain language.
@@ -49,7 +59,7 @@ It's a calm, minimal space where you can say what's on your mind and receive a t
 
 ---
 
-## 🌊 How It Works
+## How It Works
 
 ```
 You share what's on your mind
@@ -64,6 +74,10 @@ The app matches it to a Taoist principle:
 A prompt is sent to the AI with the principle, a curated reflection, and your words
         ↓
 You receive a reflection — calm, clear, personal
+        ↓
+You tap 👍 or 👎
+        ↓
+Feedback improves future responses
 ```
 
 **AI engine priority** (the app picks the first available):
@@ -76,29 +90,36 @@ You receive a reflection — calm, clear, personal
 
 ---
 
-## 🧪 Eval Results
+## Quality & Evaluations
 
-Every response is tested against a golden dataset of 79 test cases covering normal inputs, edge cases, adversarial attacks, and crisis scenarios.
+Every response is tested against a **golden dataset** of 79 test cases covering normal inputs, edge cases, adversarial attacks, and crisis scenarios.
 
-| Eval | Pass Rate |
-|---|---|
-| Principle Matching | **42/42 (100%)** |
-| Crisis Detection | **8/8 (100%)** |
-| Edge Cases | **14/14 (100%)** |
-| Adversarial Robustness | **15/15 (100%)** |
+| Eval | What it tests | Pass Rate |
+|---|---|---|
+| Principle Matching | Does the right Taoist principle get selected? | **42/42 (100%)** |
+| Crisis Detection | Are crisis inputs handled with care? | **8/8 (100%)** |
+| Edge Cases | Does it handle vague, short, or unusual inputs? | **14/14 (100%)** |
+| Adversarial Robustness | Does it resist prompt injection and jailbreaks? | **15/15 (100%)** |
 
-Evals run automatically on every push via GitHub Actions.
+Evals run automatically on every push via **GitHub Actions**.
 
-```bash
-npm run eval              # all evals
-npm run eval:principle    # principle matching
-npm run eval:crisis       # crisis detection
-npm run eval:quality      # LLM-as-judge (needs GROQ_API_KEY)
+### Continuous Improvement Loop
+
+```
+User gives feedback (thumbs up/down)
+        ↓
+Negative feedback exported as JSON
+        ↓
+Imported into golden dataset as new test cases
+        ↓
+Evals re-run to verify improvements
+        ↓
+Pushed to production — GitHub Actions validates
 ```
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | | |
 |---|---|
@@ -110,11 +131,11 @@ npm run eval:quality      # LLM-as-judge (needs GROQ_API_KEY)
 | **AI (local)** | Ollama + SmolLM2 (free, offline) |
 | **Offline ML** | DistilBERT zero-shot classification |
 | **Storage** | localStorage — nothing leaves your browser |
-| **Deploy** | Vercel |
+| **CI/CD** | GitHub Actions + Vercel |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 git clone https://github.com/riya1103/tao-wellbeing.git
@@ -137,7 +158,6 @@ Open **http://localhost:3000**
 ```bash
 # Install Ollama: https://ollama.com
 ollama pull smollm2
-# Start the app
 npm run dev
 ```
 
@@ -145,42 +165,60 @@ npm run dev
 
 No API key? No problem. The app uses a curated library of 15 Taoist reflections that work entirely offline.
 
+### Run Evals
+
+```bash
+npm run eval              # all evals
+npm run eval:principle    # principle matching
+npm run eval:crisis       # crisis detection
+npm run eval:quality      # LLM-as-judge (needs GROQ_API_KEY)
+npm run eval -- --history # view score trends
+```
+
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 tao-wellbeing/
 ├── app/
 │   ├── page.tsx                 ← Home
-│   ├── reflect/page.tsx         ← Reflection tool (streaming UI)
+│   ├── reflect/page.tsx         ← Reflection tool (streaming)
 │   ├── breathe/page.tsx         ← Breathing exercises
 │   ├── stillness/page.tsx       ← Meditation timer
-│   ├── journal/page.tsx         ← History & mood timeline
+│   ├── journal/page.tsx         ← History, mood timeline, feedback
 │   └── api/reflect/route.ts     ← Streaming reflection API
 │       ├── Groq (free hosted LLM)
 │       ├── Ollama (local LLM)
 │       ├── Anthropic (paid, optional)
 │       └── Curated fallback (offline)
-├── components/                  ← UI components
+├── components/
+│   ├── FeedbackButton.tsx       ← Thumbs up/down after each reflection
+│   ├── FeedbackExport.tsx       ← Export feedback + view stats
+│   ├── BreathingCircle.tsx      ← Animated breathing guide
+│   ├── MeditationTimer.tsx      ← Timer with SVG ring
+│   ├── JournalList.tsx          ← Reflection history
+│   └── Nav.tsx                  ← Bottom navigation
 ├── lib/
 │   ├── prompt.ts                ← AI system prompt (Taoist guide)
 │   ├── reflections.ts           ← 15 curated Taoist reflections
+│   ├── feedback.ts              ← Anonymous feedback storage
 │   ├── quotes.ts                ← 50+ Tao Te Ching quotes
 │   ├── breathing.ts             ← Breathing pattern configs
 │   ├── distilbert.ts            ← Offline intent matching
-│   ├── slm.ts                   ← Offline reply builder
 │   └── storage.ts               ← localStorage persistence
 ├── tests/
-│   ├── golden-dataset.ts        ← 79 test cases for evals
-│   └── run-evals.ts             ← Eval runner (principle, crisis, quality, adversarial)
+│   ├── golden-dataset.ts        ← 79 test cases
+│   ├── run-evals.ts             ← Eval runner
+│   ├── import-feedback.ts       ← Import feedback → golden dataset
+│   └── eval-history.json        ← Score trends over time
 ├── .github/workflows/evals.yml  ← CI: runs evals on every push
 └── public/
 ```
 
 ---
 
-## 💡 Why Taoism?
+## Why Taoism?
 
 Most wellness apps borrow from CBT or Buddhist mindfulness.
 
@@ -195,14 +233,14 @@ These aren't just ideas. They're the foundation of every response this app gives
 
 ---
 
-## 📱 PWA Ready
+## PWA Ready
 
 Works as a home screen app on iOS and Android.
 No app store needed.
 
 ---
 
-## 🆘 Crisis Resources
+## Crisis Resources
 
 This is a space for reflection, not a substitute for professional care.
 
