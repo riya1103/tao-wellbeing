@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { matchReflection } from "@/lib/reflections";
 import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompt";
 import { getDistilBertGrounding } from "@/lib/distilbert";
-import { buildSlmReply } from "@/lib/slm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,10 +9,74 @@ export const dynamic = "force-dynamic";
 const DELIM = "\f";
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "smollm2";
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
 
 function encoder() {
   return new TextEncoder();
 }
+
+// ---------- Groq (free, hosted) ----------
+
+async function isGroqAvailable(): Promise<boolean> {
+  return !!process.env.GROQ_API_KEY;
+}
+
+async function streamGroq(
+  controller: ReadableStreamDefaultController,
+  prompt: string,
+  grounding: ReturnType<typeof matchReflection>,
+) {
+  const enc = encoder();
+  const header = JSON.stringify({ principle: grounding.principle, engine: "groq" });
+  controller.enqueue(enc.encode(header + DELIM));
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+      stream: true,
+      temperature: 0.85,
+      max_tokens: 512,
+    }),
+  });
+
+  if (!res.ok || !res.body) {
+    throw new Error(`Groq responded with ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    // SSE: lines starting with "data: {...}"
+    for (const line of chunk.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data:")) continue;
+      const data = trimmed.slice(5).trim();
+      if (data === "[DONE]") continue;
+      try {
+        const obj = JSON.parse(data);
+        const token = obj.choices?.[0]?.delta?.content;
+        if (token) controller.enqueue(enc.encode(token));
+      } catch {
+        /* partial */
+      }
+    }
+  }
+}
+
+// ---------- Ollama (local) ----------
 
 async function isOllamaAvailable(): Promise<boolean> {
   try {
@@ -28,17 +91,12 @@ async function isOllamaAvailable(): Promise<boolean> {
 
 async function streamOllama(
   controller: ReadableStreamDefaultController,
-  issue: string,
+  prompt: string,
   grounding: ReturnType<typeof matchReflection>,
 ) {
   const enc = encoder();
-  const header = JSON.stringify({
-    principle: grounding.principle,
-    engine: "ollama",
-  });
+  const header = JSON.stringify({ principle: grounding.principle, engine: "ollama" });
   controller.enqueue(enc.encode(header + DELIM));
-
-  const prompt = buildUserPrompt(issue, grounding);
 
   const res = await fetch(`${OLLAMA_URL}/api/generate`, {
     method: "POST",
@@ -62,14 +120,11 @@ async function streamOllama(
     const { done, value } = await reader.read();
     if (done) break;
     const chunk = decoder.decode(value, { stream: true });
-    // Ollama streams JSON lines: {"response":"token","done":false}
     for (const line of chunk.split("\n")) {
       if (!line.trim()) continue;
       try {
         const obj = JSON.parse(line);
-        if (obj.response) {
-          controller.enqueue(enc.encode(obj.response));
-        }
+        if (obj.response) controller.enqueue(enc.encode(obj.response));
       } catch {
         /* partial line */
       }
@@ -77,9 +132,10 @@ async function streamOllama(
   }
 }
 
+// ---------- Curated ----------
+
 function streamCurated(
   controller: ReadableStreamDefaultController,
-  issue: string,
   grounding: ReturnType<typeof matchReflection>,
   engine: "curated" | "curated-fallback",
 ) {
@@ -102,6 +158,26 @@ function streamCurated(
   };
   step();
 }
+
+// ---------- Fallback text ----------
+
+function fallbackText(grounding: ReturnType<typeof matchReflection>): string {
+  return `${grounding.body}\n\n— ${grounding.line}`;
+}
+
+function serveFallback(
+  controller: ReadableStreamDefaultController,
+  grounding: ReturnType<typeof matchReflection>,
+  emittedText: boolean,
+) {
+  if (!emittedText) {
+    const text = fallbackText(grounding);
+    controller.enqueue(new TextEncoder().encode(text));
+  }
+  controller.close();
+}
+
+// ---------- Handler ----------
 
 export async function POST(req: Request) {
   let issue = "";
@@ -133,29 +209,20 @@ export async function POST(req: Request) {
     }
   }
 
-  // Check for Ollama
-  const ollamaUp = await isOllamaAvailable();
+  const prompt = buildUserPrompt(issue, localGrounding);
 
-  // ---- Ollama path ----
-  if (ollamaUp) {
+  // 1. Groq (free hosted LLM — best for Vercel)
+  if (await isGroqAvailable()) {
     const stream = new ReadableStream({
       async start(controller) {
         let emittedText = false;
         try {
-          await streamOllama(controller, issue, localGrounding);
+          await streamGroq(controller, prompt, localGrounding);
           emittedText = true;
           controller.close();
         } catch (err) {
-          console.error("reflect: Ollama failed, falling back to curated:", err);
-          try {
-            if (!emittedText) {
-              const text = `${localGrounding.body}\n\n— ${localGrounding.line}`;
-              controller.enqueue(new TextEncoder().encode(text));
-            }
-            controller.close();
-          } catch {
-            /* controller may already be closed */
-          }
+          console.error("reflect: Groq failed, falling back:", err);
+          serveFallback(controller, localGrounding, emittedText);
         }
       },
     });
@@ -164,7 +231,27 @@ export async function POST(req: Request) {
     });
   }
 
-  // ---- Anthropic path ----
+  // 2. Ollama (local)
+  if (await isOllamaAvailable()) {
+    const stream = new ReadableStream({
+      async start(controller) {
+        let emittedText = false;
+        try {
+          await streamOllama(controller, prompt, localGrounding);
+          emittedText = true;
+          controller.close();
+        } catch (err) {
+          console.error("reflect: Ollama failed, falling back:", err);
+          serveFallback(controller, localGrounding, emittedText);
+        }
+      },
+    });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  // 3. Anthropic
   if (hasAnthropicKey) {
     const stream = new ReadableStream({
       async start(controller) {
@@ -173,7 +260,7 @@ export async function POST(req: Request) {
           const client = new Anthropic();
           const enc = encoder();
           const header = JSON.stringify({
-            principle: grounding.principle,
+            principle: localGrounding.principle,
             engine: "claude",
           });
           controller.enqueue(enc.encode(header + DELIM));
@@ -183,7 +270,7 @@ export async function POST(req: Request) {
             max_tokens: 1024,
             thinking: { type: "adaptive" },
             system: SYSTEM_PROMPT,
-            messages: [{ role: "user", content: buildUserPrompt(issue, grounding) }],
+            messages: [{ role: "user", content: prompt }],
           });
 
           messageStream.on("text", (delta) => {
@@ -194,16 +281,8 @@ export async function POST(req: Request) {
           await messageStream.finalMessage();
           controller.close();
         } catch (err) {
-          console.error("reflect: AI path failed, serving curated fallback:", err);
-          try {
-            if (!emittedText) {
-              const text = `${localGrounding.body}\n\n— ${localGrounding.line}`;
-              controller.enqueue(new TextEncoder().encode(text));
-            }
-            controller.close();
-          } catch {
-            /* controller may already be closed */
-          }
+          console.error("reflect: Anthropic failed, serving curated:", err);
+          serveFallback(controller, localGrounding, emittedText);
         }
       },
     });
@@ -212,10 +291,10 @@ export async function POST(req: Request) {
     });
   }
 
-  // ---- Curated fallback ----
+  // 4. Curated fallback
   const stream = new ReadableStream({
     start(controller) {
-      streamCurated(controller, issue, localGrounding, "curated");
+      streamCurated(controller, localGrounding, "curated");
     },
   });
   return new Response(stream, {
