@@ -69,18 +69,6 @@ that works entirely offline.
 
 ---
 
-## 🎨 Design
-
-| | |
-|---|---|
-| **Palette** | Rice paper (#F4F1EA) · Sumi ink (#1A1A17) · Faded bamboo (#8A7E6B) |
-| **Typography** | Serif stack — Songti SC, Georgia, Noto Serif |
-| **Motion** | Floating particles · Ink-wash page transitions · Breathing circle |
-| **Theme** | Light and dark mode, respects system preference |
-| **Accessibility** | Reduced motion support · Semantic HTML · Keyboard navigable |
-
----
-
 ## 🛠 Tech Stack
 
 | | |
