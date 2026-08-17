@@ -4,7 +4,7 @@
 
 **A calm, AI-powered space for reflection.**
 
-*No accounts. No tracking. No cloud. Just you and your thoughts.*
+*No accounts. No tracking. No cloud. No internet required.*
 
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy-on_Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/new/clone?repository-url=https://github.com/riya1103/tao-wellbeing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
@@ -55,19 +55,50 @@ The AI generates a calm, personal response in plain English
 You tap 👍 or 👎 — feedback improves future responses
 ```
 
-### AI Engine
+### AI Engine — The Offline-First Stack
 
-The app automatically picks the first available engine:
+The app picks the best available engine. **No internet? No problem.**
 
-| Priority | Engine | Model | Cost | Latency |
-|---|---|---|---|---|
-| 1 | **Groq** | Llama 3.1 8B | Free (14,400 req/day) | ~1-2s |
-| 2 | **Ollama** | SmolLM2 1.7B | Free (runs locally) | ~3-5s |
-| 3 | **Curated library** | 15 hand-authored reflections | Free (offline) | ~0s |
+| Priority | Engine | Model | Cost | Latency | Works Offline |
+|---|---|---|---|---|---|
+| 1 | **On-device SLM** | Qwen2 0.5B (ONNX) | Free | ~2-5s | **Yes** |
+| 2 | **Groq** | Llama 3.1 8B | Free (14,400 req/day) | ~1-2s | No |
+| 3 | **Ollama** | SmolLM2 1.7B | Free (runs locally) | ~3-5s | **Yes** |
+| 4 | **Curated library** | 15 hand-authored reflections | Free | ~0s | **Yes** |
 
-**The system prompt:**
+**The key insight:** On-device SLM runs a real language model **in your browser** using WebAssembly. No server. No API key. No data leaves your device. Works on a plane, in a tunnel, anywhere.
+
+### Crisis Detection — Always Local
+
+Crisis language is detected **instantly** on-device before any AI call:
+
+```
+User types crisis language
+        ↓
+Local keyword detection (0ms, no API)
+        ↓
+Crisis resources shown immediately
+        ↓
+No sensitive data sent to any server
+```
+
+### The System Prompt
 
 > You are a quiet guide in the Taoist tradition. A person has shared something that is weighing on them, and you are here to reflect — not to fix. Use simple, clear English. Short sentences. Easy words. Calm and warm. Not preachy. Not clinical. Like a thoughtful friend who reads the Tao Te Ching.
+
+---
+
+## Why On-Device AI Matters
+
+| With cloud AI | With on-device SLM |
+|---|---|
+| Needs internet | **Works anywhere** |
+| Data sent to servers | **Data never leaves your device** |
+| API costs at scale | **Free forever** |
+| Latency depends on network | **Consistent speed** |
+| Government blocks = dead app | **Uncensorable** |
+
+**This is what "privacy first" actually looks like.**
 
 ---
 
@@ -117,11 +148,12 @@ Deployed to production
 
 | Principle | What it means |
 |---|---|
-| **Privacy first** | No accounts, no databases, no analytics. Everything lives in `localStorage`. |
-| **AI with guardrails** | Free LLM generates responses, but a curated library ensures quality even offline. |
+| **Offline-first** | Full AI responses without internet. On-device SLM + curated fallback. |
+| **Privacy first** | No accounts, no databases, no analytics. Everything lives in `localStorage`. No data leaves your device. |
+| **AI with guardrails** | On-device SLM generates responses, but a curated library ensures quality even if the model fails. |
 | **Continuous improvement** | User feedback flows into the golden dataset. Evals run on every push. The system self-heals for common failures. |
 | **Accessible** | Works offline. Supports screen readers. Respects `prefers-reduced-motion`. |
-| **Free forever** | No paid APIs required. Groq free tier covers 14,400 req/day. Ollama runs locally. |
+| **Free forever** | No paid APIs required. On-device SLM is free. Groq free tier covers 14,400 req/day. |
 
 ---
 
@@ -133,6 +165,7 @@ Deployed to production
 | **Language** | TypeScript | Type safety, better DX |
 | **UI** | React 19 | Component model, hooks |
 | **Styling** | Vanilla CSS | No framework overhead, full control |
+| **AI (on-device)** | Qwen2 0.5B (ONNX Runtime) | Runs in browser, free, private |
 | **AI (hosted)** | Groq + Llama 3.1 8B | Free, fast, OpenAI-compatible API |
 | **AI (local)** | Ollama + SmolLM2 | Free, offline, privacy-first |
 | **Offline ML** | DistilBERT (Xenova) | Zero-shot classification, runs in browser |
@@ -188,11 +221,11 @@ npm run eval:fix          # auto-fix keyword failures
 tao-wellbeing/
 ├── app/
 │   ├── page.tsx                 ← Home
-│   ├── reflect/page.tsx         ← Reflection tool (streaming)
+│   ├── reflect/page.tsx         ← Reflection tool (on-device SLM + streaming)
 │   ├── breathe/page.tsx         ← Breathing exercises
 │   ├── stillness/page.tsx       ← Meditation timer
 │   ├── journal/page.tsx         ← History, mood timeline, feedback
-│   └── api/reflect/route.ts     ← Streaming reflection API
+│   └── api/reflect/route.ts     ← Streaming reflection API (Groq/Ollama/Anthropic)
 ├── components/
 │   ├── FeedbackButton.tsx       ← Thumbs up/down
 │   ├── FeedbackExport.tsx       ← Export feedback + stats
@@ -200,6 +233,7 @@ tao-wellbeing/
 │   ├── MeditationTimer.tsx      ← Timer with SVG ring
 │   └── Nav.tsx                  ← Bottom navigation
 ├── lib/
+│   ├── slm-browser.ts           ← On-device SLM (Qwen2 0.5B via ONNX)
 │   ├── prompt.ts                ← AI system prompt
 │   ├── reflections.ts           ← 15 curated Taoist reflections
 │   ├── feedback.ts              ← Anonymous feedback storage

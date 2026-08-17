@@ -98,14 +98,18 @@
 │  │ Page      │  │ Page     │  │ Page     │  │ Page    │ │
 │  └────┬─────┘  └──────────┘  └──────────┘  └────┬────┘ │
 │       │                                          │      │
-│  ┌────▼─────┐                              ┌────▼────┐ │
-│  │ Feedback  │                              │ Storage │ │
-│  │ Button    │                              │ (LS)    │ │
-│  └──────────┘                              └─────────┘ │
-└───────────────┬─────────────────────────────────────────┘
-                │ POST /api/reflect
-                │ { issue: "..." }
-                ▼
+│  ┌────▼─────┐  ┌──────────────────┐  ┌─────────┐ │      │
+│  │ Feedback  │  │ On-device SLM    │  │ Storage │ │      │
+│  │ Button    │  │ (Qwen2 0.5B)    │  │ (LS)    │ │      │
+│  └──────────┘  │ Free, private,   │  └─────────┘ │      │
+│                │ works offline    │              │      │
+│                └────────┬─────────┘              │      │
+│                         │ (if SLM unavailable)   │      │
+│                         ▼                        │      │
+└─────────────────────────┬────────────────────────┘──────┘
+                          │ POST /api/reflect
+                          │ { issue: "..." }
+                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  SERVER (Next.js API Route)               │
 │                                                          │
@@ -138,6 +142,8 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
+**The key insight:** The on-device SLM runs **before** the API call. If it's available, the request never leaves the browser. If it's not, the app falls back to the server API.
+
 ---
 
 ## 5. AI System Design
@@ -151,16 +157,20 @@
 
 This is NOT a pure generative system. It's a **retrieval-augmented generation** pattern where the retrieval is hand-curated, not vector-based.
 
-### 5.2 AI Engine Priority
+### 5.2 AI Engine Priority — Offline-First Stack
 
-| Priority | Engine | Model | Cost | Latency | Where it runs |
+The app picks the best available engine. **No internet? No problem.**
+
+| Priority | Engine | Model | Cost | Latency | Works Offline |
 |---|---|---|---|---|---|
-| 1 | **Groq** | Llama 3.1 8B | Free (14,400 req/day) | ~1-2s | Groq cloud |
-| 2 | **Ollama** | SmolLM2 1.7B | Free | ~3-5s | User's machine |
-| 3 | **Anthropic** | Claude Opus 4 | ~$15/1M tokens | ~2-4s | Anthropic cloud |
-| 4 | **Curated** | N/A (pre-written) | Free | ~0.5s | Offline |
+| 1 | **On-device SLM** | Qwen2 0.5B (ONNX) | Free | ~2-5s | **Yes** |
+| 2 | **Groq** | Llama 3.1 8B | Free (14,400 req/day) | ~1-2s | No |
+| 3 | **Ollama** | SmolLM2 1.7B | Free (runs locally) | ~3-5s | **Yes** |
+| 4 | **Curated library** | 15 hand-authored reflections | Free | ~0s | **Yes** |
 
-The system automatically picks the first available engine. If one fails, it falls back to the next.
+**On-device SLM** runs a real language model **in the browser** using WebAssembly (ONNX Runtime). No server. No API key. No data leaves the device. Works on a plane, in a tunnel, anywhere.
+
+**Crisis detection** is always local — runs before any AI call, instant, no API needed.
 
 ### 5.3 Streaming Protocol
 
@@ -178,6 +188,48 @@ All engines stream responses using a custom protocol:
 **Body:** Plain text streamed token-by-token. The `\f` (form feed) delimiter separates header from body.
 
 The client parses the header first, then appends body chunks to build the full reflection.
+
+### 5.4 On-Device SLM (Browser-Based)
+
+**Model:** Qwen2 0.5B (quantized, ~400MB)
+**Runtime:** ONNX Runtime Web (WebAssembly)
+**Library:** `@xenova/transformers` (same as DistilBERT)
+
+**How it works:**
+1. On page load, the app attempts to load the Qwen2 0.5B model
+2. The model downloads to the browser's cache (~400MB, one-time)
+3. On subsequent visits, the model loads from cache (~2-5s)
+4. When the user submits a reflection, the on-device SLM generates a response
+5. If the SLM is unavailable, the app falls back to the server API
+
+**Why Qwen2 0.5B:**
+- Small enough to run in-browser (~400MB)
+- Good enough for short, calm reflections
+- Apache 2.0 license (free for commercial use)
+- Supports chat format (system + user messages)
+- Quantized for faster inference
+
+**The flow:**
+```
+User submits reflection
+        ↓
+Is on-device SLM loaded?
+  ├── Yes → Generate locally (Qwen2 0.5B via ONNX)
+  │         └── Response returned in ~2-5s
+  └── No  → Call server API (Groq/Ollama/Anthropic)
+            └── Response streamed in ~1-2s
+```
+
+**Crisis detection is always local:**
+```
+User types crisis language
+        ↓
+Local keyword detection (0ms, no API)
+        ↓
+Crisis resources shown immediately
+        ↓
+No sensitive data sent to any server
+```
 
 ---
 
@@ -676,6 +728,7 @@ Deployed to production
 | **Language** | TypeScript | Type safety, better DX |
 | **UI** | React 19 | Component model, hooks |
 | **Styling** | Vanilla CSS | No framework overhead, full control |
+| **AI (on-device)** | Qwen2 0.5B (ONNX Runtime) | Runs in browser, free, private, works offline |
 | **AI (hosted)** | Groq + Llama 3.1 8B | Free, fast, OpenAI-compatible API |
 | **AI (local)** | Ollama + SmolLM2 | Free, offline, privacy-first |
 | **AI (paid)** | Anthropic Claude Opus 4 | Highest quality, optional |
@@ -692,6 +745,7 @@ Deployed to production
 
 | Item | Cost | Notes |
 |---|---|---|
+| On-device SLM | **$0** | Runs in browser, no server needed |
 | Groq API | **$0** | Free tier: 14,400 req/day |
 | Ollama | **$0** | Runs on user's machine |
 | Vercel | **$0** | Hobby plan (personal projects) |
@@ -718,12 +772,12 @@ Deployed to production
 
 ### Medium-term (1-2 months)
 - [ ] Add conversation memory (multi-turn reflections)
-- [ ] Support multiple languages
+- [ ] Support multiple languages (on-device SLM can translate)
 - [ ] Add journal export (PDF/markdown)
 - [ ] Implement mood analytics dashboard
 
 ### Long-term (3-6 months)
-- [ ] Fine-tune a small model on curated reflections
+- [ ] Upgrade on-device SLM to Qwen2 1.5B (better quality, still free)
 - [ ] Add voice input for reflections
 - [ ] Build a community library of Taoist reflections
 - [ ] Mobile app (React Native)
@@ -763,6 +817,7 @@ tao-wellbeing/
 │   ├── quotes.ts                ← 50+ Tao Te Ching quotes
 │   ├── breathing.ts             ← 4 breathing pattern configs
 │   ├── distilbert.ts            ← Offline zero-shot classification
+│   ├── slm-browser.ts           ← On-device SLM (Qwen2 0.5B via ONNX)
 │   ├── slm.ts                   ← Offline reply builder (fallback)
 │   └── storage.ts               ← localStorage persistence (mood + journal)
 ├── tests/
@@ -789,7 +844,8 @@ tao-wellbeing/
 | Curated reflections | 15 |
 | Tao Te Ching quotes | 50+ |
 | Breathing patterns | 4 |
-| AI engines supported | 4 (Groq, Ollama, Anthropic, Curated) |
+| AI engines supported | 4 (On-device SLM, Groq, Ollama, Curated) |
+| On-device model | Qwen2 0.5B (ONNX, ~400MB) |
 | Monthly cost | $0 |
 | External dependencies | 2 (Groq, Vercel) — both free |
 

@@ -281,6 +281,81 @@ body {
   margin: 0;
 }
 
+/* ── SLM status indicator ───────────────────────────────────────────────────── */
+
+.slm-status {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.slm-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  opacity: 0.8;
+}
+
+.slm-loading {
+  color: var(--bamboo);
+  border: 1px solid var(--line);
+}
+
+.slm-ready {
+  color: var(--mood-serene);
+  border: 1px solid rgba(122, 158, 126, 0.3);
+  background: rgba(122, 158, 126, 0.06);
+}
+
+.slm-fallback {
+  color: var(--bamboo);
+  border: 1px solid var(--line);
+  opacity: 0.6;
+}
+
+/* ── crisis card ────────────────────────────────────────────────────────────── */
+
+.crisis-card {
+  background: rgba(122, 158, 126, 0.08);
+  border: 1px solid rgba(122, 158, 126, 0.25);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+  animation: fadeIn 600ms ease;
+}
+
+.crisis-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+.crisis-text {
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.crisis-resources {
+  font-size: 0.85rem;
+  line-height: 1.8;
+  margin: 0 0 1.25rem;
+  color: var(--ink-soft);
+}
+
+.crisis-resources strong {
+  color: var(--ink);
+}
+
+.crisis-resources a {
+  color: var(--mood-serene);
+  text-decoration: underline;
+}
+
 /* ── theme toggle ───────────────────────────────────────────────────────────── */
 
 .theme-toggle {
