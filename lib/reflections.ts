@@ -17,7 +17,7 @@ export const REFLECTIONS: Reflection[] = [
     keywords: [
       "worry", "worried", "worrying", "anxious", "anxiety", "nervous",
       "overthink", "overthinking", "racing", "spiral", "panic", "dread",
-      "future", "what if",
+      "future", "what if", "tightness", "chest", "can't sleep", "insomnia",
     ],
     body: "Your mind is running ahead to a future that hasn't happened yet. It replays the same scenes, over and over, on ground that doesn't exist yet. And none of that replaying changes a thing — the river comes when it comes.\n\nWu wei means acting without forcing. Not sitting still doing nothing. Just tending to what is right in front of you, right now, instead of fighting with what-ifs.\n\nLet your thoughts come and go like clouds. You don't have to follow each one.",
     line: "Nature does not hurry, yet everything is accomplished.",
@@ -83,7 +83,7 @@ export const REFLECTIONS: Reflection[] = [
     keywords: [
       "burnout", "burned out", "burnt out", "exhausted", "exhaustion", "tired",
       "drained", "depleted", "overwhelmed", "overwhelm", "too much", "can't keep up",
-      "no energy", "spent", "weary",
+      "no energy", "spent", "weary", "running on empty", "day off", "no rest",
     ],
     body: "You've been giving and giving with nothing coming back in. A cup that's never filled will crack. Even the deepest well runs dry if you never let it rain.\n\nThe Tao sees emptiness as just as important as fullness. The empty space inside a cup is what makes it useful. The open space in a room is what lets you live in it. Rest isn't doing nothing — it's how you get filled back up.\n\nDo less. Let the ground rest. This, too, is important work.",
     line: "Thirty spokes share the wheel's hub; it is the center hole that makes it useful.",
@@ -105,7 +105,7 @@ export const REFLECTIONS: Reflection[] = [
     keywords: [
       "fear", "afraid", "scared", "terrified", "frightened", "phobia",
       "avoid", "avoiding", "hiding", "risk", "vulnerable", "exposed", "unsafe",
-      "insecure",
+      "insecure", "fail", "failure", "what if i",
     ],
     body: "Fear tightens everything up. It braces for a hit that might never come. It wants to keep you small, and mistakes being stiff for being safe.\n\nBut stiff things break in the wind. Soft, flexible branches bend and bounce back. Facing fear isn't about beating it — it's about softening around it, breathing, letting it move through you instead of getting stuck.\n\nYou can be afraid and still take one small step. That's what courage actually looks like.",
     line: "The tree that does not bend with the wind will be broken by it.",
@@ -138,7 +138,7 @@ export const REFLECTIONS: Reflection[] = [
     keywords: [
       "change", "changing", "transition", "new job", "moving", "moved", "unknown",
       "starting over", "start over", "fresh start", "different", "everything's changing",
-      "unstable", "instability",
+      "unstable", "instability", "so fast", "life is changing", "just moved",
     ],
     body: "The ground is shifting under your feet, and you're reaching for something solid. But nothing in this world stays still — looking for things to never change is itself a source of pain.\n\nThe Tao is constant change, and living well means moving with it instead of fighting it. A reed survives a flood not by standing tall, but by bending with the water. What feels like losing your footing might be a current carrying you somewhere real.\n\nLet go of how things were. Meet what's coming.",
     line: "Life is a series of natural and spontaneous changes. Do not resist them.",
@@ -160,6 +160,7 @@ export const REFLECTIONS: Reflection[] = [
     keywords: [
       "lonely", "loneliness", "alone", "isolated", "isolation", "disconnected",
       "no one", "nobody", "unloved", "unseen", "left out", "outsider", "solitude",
+      "don't know anyone", "new city", "invisible",
     ],
     body: "There's a distance between you and others, and in that distance, you feel unseen. Loneliness is a real ache — you can't argue it away. It needs to be held gently.\n\nBut the Tao is the thread that connects everything — nothing is truly separate. The valley and the peak are the same mountain. Even when you're apart, you belong to the same world as everything that breathes. Solitude, met with kindness, can become a doorway instead of a wall.\n\nReach out where you can. And where you can't yet, be a quiet friend to yourself.",
     line: "The ten thousand things arise and are of one source.",
