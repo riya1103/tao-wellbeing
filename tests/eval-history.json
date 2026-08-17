@@ -1,0 +1,42 @@
+[
+  {
+    "timestamp": "2026-08-17T11:51:05.397Z",
+    "commit": "97f1b86",
+    "suites": [
+      {
+        "name": "Principle Matching",
+        "passed": 42,
+        "failed": 0,
+        "total": 42,
+        "pct": 100
+      },
+      {
+        "name": "Crisis Detection",
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "pct": 100
+      },
+      {
+        "name": "Edge Cases (Principle Matching)",
+        "passed": 14,
+        "failed": 0,
+        "total": 14,
+        "pct": 100
+      },
+      {
+        "name": "Adversarial Robustness (Basic)",
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "pct": 100
+      }
+    ],
+    "overall": {
+      "passed": 79,
+      "failed": 0,
+      "total": 79,
+      "pct": 100
+    }
+  }
+]

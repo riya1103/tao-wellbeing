@@ -10,10 +10,15 @@
  *   npx tsx tests/run-evals.ts --quality           # response quality (needs Groq)
  *   npx tsx tests/run-evals.ts --adversarial       # adversarial robustness (needs Groq)
  *   npx tsx tests/run-evals.ts --edge              # edge cases (needs Groq)
+ *   npx tsx tests/run-evals.ts --history           # show eval history
  */
 
 import { GOLDEN_DATASET, type TestCase } from "./golden-dataset";
 import { matchReflection } from "../lib/reflections";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { join } from "path";
+
+const HISTORY_PATH = join(__dirname, "eval-history.json");
 
 // ─────────────────────────────────────────────
 //  Colors
@@ -349,6 +354,104 @@ Respond ONLY with a JSON object:
 }
 
 // ─────────────────────────────────────────────
+//  History
+// ─────────────────────────────────────────────
+interface HistoryEntry {
+  timestamp: string;
+  commit: string;
+  suites: {
+    name: string;
+    passed: number;
+    failed: number;
+    total: number;
+    pct: number;
+  }[];
+  overall: { passed: number; failed: number; total: number; pct: number };
+}
+
+function getCommitHash(): string {
+  try {
+    const { execSync } = require("child_process");
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+function saveHistory(suites: EvalSuite[]) {
+  const entry: HistoryEntry = {
+    timestamp: new Date().toISOString(),
+    commit: getCommitHash(),
+    suites: suites.map((s) => {
+      const passed = s.results.filter((r) => r.passed).length;
+      const failed = s.results.filter((r) => !r.passed).length;
+      const total = passed + failed;
+      return {
+        name: s.name,
+        passed,
+        failed,
+        total,
+        pct: total > 0 ? Math.round((passed / total) * 100) : 0,
+      };
+    }),
+    overall: (() => {
+      const passed = suites.reduce((a, s) => a + s.results.filter((r) => r.passed).length, 0);
+      const failed = suites.reduce((a, s) => a + s.results.filter((r) => !r.passed).length, 0);
+      const total = passed + failed;
+      return { passed, failed, total, pct: total > 0 ? Math.round((passed / total) * 100) : 0 };
+    })(),
+  };
+
+  let history: HistoryEntry[] = [];
+  if (existsSync(HISTORY_PATH)) {
+    try {
+      history = JSON.parse(readFileSync(HISTORY_PATH, "utf-8"));
+    } catch {
+      history = [];
+    }
+  }
+
+  history.push(entry);
+  if (history.length > 100) history = history.slice(-100);
+
+  writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2));
+  console.log(`${DIM}Results saved to tests/eval-history.json${RESET}`);
+}
+
+function printHistory() {
+  if (!existsSync(HISTORY_PATH)) {
+    console.log(`${Y}No eval history found.${RESET}`);
+    return;
+  }
+
+  const history: HistoryEntry[] = JSON.parse(readFileSync(HISTORY_PATH, "utf-8"));
+
+  console.log(`\n${BOLD}${"═".repeat(60)}${RESET}`);
+  console.log(`${BOLD}  ☯  EVAL HISTORY (last ${Math.min(history.length, 20)} runs)${RESET}`);
+  console.log(`${BOLD}${"═".repeat(60)}\n`);
+
+  const recent = history.slice(-20);
+
+  for (const entry of recent) {
+    const date = entry.timestamp.slice(0, 16).replace("T", " ");
+    const color = entry.overall.pct >= 80 ? G : entry.overall.pct >= 50 ? Y : R;
+    console.log(`${DIM}${date}${RESET}  ${color}${entry.overall.pct}%${RESET}  ${DIM}(${entry.overall.passed}/${entry.overall.total})${RESET}  ${DIM}${entry.commit}${RESET}`);
+  }
+
+  // Trend
+  if (history.length >= 2) {
+    const last = history[history.length - 1].overall.pct;
+    const prev = history[history.length - 2].overall.pct;
+    const diff = last - prev;
+    if (diff > 0) console.log(`\n${G}↑ Improving (+${diff}%)${RESET}`);
+    else if (diff < 0) console.log(`\n${R}↓ Regressed (${diff}%)${RESET}`);
+    else console.log(`\n${Y}→ Stable${RESET}`);
+  }
+
+  console.log();
+}
+
+// ─────────────────────────────────────────────
 //  Report printer
 // ─────────────────────────────────────────────
 function printReport(suites: EvalSuite[]) {
@@ -398,6 +501,11 @@ async function main() {
   const args = process.argv.slice(2);
   const runAll = args.length === 0;
 
+  if (args.includes("--history")) {
+    printHistory();
+    return;
+  }
+
   const suites: EvalSuite[] = [];
 
   if (runAll || args.includes("--principle")) {
@@ -420,6 +528,7 @@ async function main() {
   }
 
   printReport(suites);
+  saveHistory(suites);
 }
 
 main().catch(console.error);
