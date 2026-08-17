@@ -170,6 +170,8 @@ The app picks the best available engine. **No internet? No problem.**
 
 **On-device SLM** runs a real language model **in the browser** using WebAssembly (ONNX Runtime). No server. No API key. No data leaves the device. Works on a plane, in a tunnel, anywhere.
 
+**Important caveat:** The first time a user visits the app, the model (~400MB) must be downloaded and cached in the browser. This takes 1-5 minutes depending on connection speed. After that, the model is cached and works completely offline — no internet required, ever.
+
 **Crisis detection** is always local — runs before any AI call, instant, no API needed.
 
 ### 5.3 Streaming Protocol
@@ -191,16 +193,26 @@ The client parses the header first, then appends body chunks to build the full r
 
 ### 5.4 On-Device SLM (Browser-Based)
 
-**Model:** Qwen2 0.5B (quantized, ~400MB)
+**Model:** Qwen2 0.5B (quantized, ~200MB) or DistilGPT2 (~80MB)
 **Runtime:** ONNX Runtime Web (WebAssembly)
 **Library:** `@xenova/transformers` (same as DistilBERT)
 
 **How it works:**
-1. On page load, the app attempts to load the Qwen2 0.5B model
-2. The model downloads to the browser's cache (~400MB, one-time)
-3. On subsequent visits, the model loads from cache (~2-5s)
-4. When the user submits a reflection, the on-device SLM generates a response
-5. If the SLM is unavailable, the app falls back to the server API
+1. On page load, the app loads DistilGPT2 (~80MB, lightweight default)
+2. User can upgrade to Qwen2 0.5B (~200MB) for better quality with one click
+3. The model downloads to the browser's cache (one-time)
+4. On subsequent visits, the model loads from cache (~2-5s)
+5. When the user submits a reflection, the on-device SLM generates a response
+6. If the SLM is unavailable, the app falls back to the server API
+
+**Important:** The first visit requires internet to download the model. After that, the app works completely offline. The model is cached in the browser's IndexedDB and persists until the user clears their browser data.
+
+**Model comparison:**
+
+| Model | Size | Quality | Use case |
+|---|---|---|---|
+| DistilGPT2 | ~80MB | Basic | Default, fast download |
+| Qwen2 0.5B | ~200MB | Good | Optional upgrade |
 
 **Why Qwen2 0.5B:**
 - Small enough to run in-browser (~400MB)
@@ -845,7 +857,7 @@ tao-wellbeing/
 | Tao Te Ching quotes | 50+ |
 | Breathing patterns | 4 |
 | AI engines supported | 4 (On-device SLM, Groq, Ollama, Curated) |
-| On-device model | Qwen2 0.5B (ONNX, ~400MB) |
+| On-device model | DistilGPT2 (~80MB default) + Qwen2 0.5B (~200MB upgrade) |
 | Monthly cost | $0 |
 | External dependencies | 2 (Groq, Vercel) — both free |
 

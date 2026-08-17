@@ -68,14 +68,15 @@ here's the thing most apps won't tell you: your thoughts get sent to a server so
 
 | where the ai runs | cost | needs internet? |
 |---|---|---|
-| **your browser** (qwen2 0.5b) | free | **no** |
+| **your browser** (distilgpt2, ~80mb) | free | **no*** |
+| **your browser** (qwen2 0.5b, ~200mb) | free | **no*** |
 | groq cloud (llama 3.1 8b) | free (14k req/day) | yes |
 | your machine via ollama | free | **no** |
 | curated reflections (fallback) | free | **no** |
 
-the app tries to run the ai **right on your device** first. no server. no api key. no data leaves your browser. works on a plane. works in a tunnel. works where the wifi is terrible.
+*\*first visit needs internet to download the model. after that, it's cached and works completely offline.*
 
-if that doesn't work, it falls back to groq (also free). and if *that* doesn't work, there are 15 hand-written reflections ready to go.
+the app tries to run the ai **right on your device** first. no server. no api key. no data leaves your browser. starts with distilgpt2 (~80mb) — small, fast, good enough. you can upgrade to qwen2 (~200mb) for better quality with one click. works on a plane. works in a tunnel. works where the wifi is terrible.
 
 **crisis detection is always local.** if you type something that sounds like you're in trouble, the app shows crisis resources instantly. no api call. no delay. no sensitive data sent anywhere.
 
@@ -156,7 +157,7 @@ these aren't just ideas in this app. they're in every response. because they wor
 | language | typescript | catches bugs before they happen |
 | ui | react 19 | component model, hooks |
 | styling | vanilla css | no framework overhead |
-| ai (on-device) | qwen2 0.5b (onnx) | runs in browser, free, private |
+| ai (on-device) | distilgpt2 + qwen2 (onnx) | runs in browser, free, private |
 | ai (hosted) | groq + llama 3.1 8b | free, fast |
 | ai (local) | ollama + smollm2 | free, offline |
 | offline ml | distilbert | zero-shot classification, runs in browser |

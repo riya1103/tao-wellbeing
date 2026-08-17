@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Enso from "@/components/Enso";
 import FloatingElements from "@/components/FloatingElements";
 import PageTransition from "@/components/PageTransition";
@@ -9,8 +9,14 @@ import { addJournal } from "@/lib/storage";
 import {
   isSlmAvailable,
   getSlmStatus,
+  getActiveModel,
+  getLoadProgress,
+  loadModel,
+  onSlmProgress,
   generateSlmReflection,
   detectCrisisLocally,
+  DEFAULT_MODEL,
+  type ModelId,
 } from "@/lib/slm-browser";
 import { matchReflection } from "@/lib/reflections";
 import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompt";
@@ -30,58 +36,57 @@ export default function ReflectPage() {
   const [engine, setEngine] = useState("");
   const [slmState, setSlmState] = useState<SlmState>("idle");
   const [crisisMode, setCrisisMode] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
-  const reflectionRef = useRef("");
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadStatus, setDownloadStatus] = useState("");
+  const [activeModel, setActiveModel] = useState<ModelId | null>(null);
+  const [reflecting, setReflecting] = useState(false);
 
-  // Load SLM on mount
+  // Load SLM on mount with progress
   useEffect(() => {
-    async function loadSlm() {
+    const unsub = onSlmProgress((p) => {
+      setDownloadProgress(p.progress);
+      setDownloadStatus(p.status);
+    });
+
+    async function init() {
       const status = getSlmStatus();
       if (status === "ready") {
         setSlmState("ready");
+        setActiveModel(getActiveModel());
         return;
       }
       if (status === "loading") {
         setSlmState("loading");
         return;
       }
-
       setSlmState("loading");
-      const available = await isSlmAvailable();
-      setSlmState(available ? "ready" : "error");
+      const ok = await isSlmAvailable();
+      setSlmState(ok ? "ready" : "error");
+      setActiveModel(getActiveModel());
     }
-    loadSlm();
+    init();
+
+    return unsub;
   }, []);
 
-  // Local crisis detection — instant, no API needed
   const checkCrisis = (text: string): boolean => {
     return detectCrisisLocally(text);
   };
 
-  // Generate reflection using on-device SLM
   const generateLocally = async (text: string): Promise<void> => {
     const grounding = matchReflection(text);
     setPrinciple(grounding.principle);
-
     const userPrompt = buildUserPrompt(text, grounding);
     const result = await generateSlmReflection(userPrompt, SYSTEM_PROMPT);
-
-    reflectionRef.current = result;
     setReflection(result);
     setEngine("slm-local");
-    setPhase("done");
   };
 
-  // Generate reflection using server API (streaming)
   const generateViaApi = async (text: string): Promise<void> => {
-    const controller = new AbortController();
-    abortRef.current = controller;
-
     const res = await fetch("/api/reflect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ issue: text }),
-      signal: controller.signal,
     });
 
     if (!res.ok || !res.body) {
@@ -92,6 +97,7 @@ export default function ReflectPage() {
     const decoder = new TextDecoder();
     let headerParsed = false;
     let streamBuffer = "";
+    let fullText = "";
 
     while (true) {
       const { done, value } = await reader.read();
@@ -107,16 +113,13 @@ export default function ReflectPage() {
           const meta = JSON.parse(header);
           if (meta?.principle) setPrinciple(meta.principle);
           if (meta?.engine) setEngine(meta.engine);
-        } catch {
-          /* header malformed */
-        }
+        } catch { /* malformed */ }
         headerParsed = true;
       }
 
       if (headerParsed && streamBuffer.length > 0) {
-        const chunk = streamBuffer;
-        reflectionRef.current += chunk;
-        setReflection(reflectionRef.current);
+        fullText += streamBuffer;
+        setReflection(fullText);
         streamBuffer = "";
       }
     }
@@ -127,52 +130,46 @@ export default function ReflectPage() {
     if (!text || phase === "reflecting") return;
 
     setPhase("reflecting");
+    setReflecting(true);
     setPrinciple("");
     setReflection("");
-    reflectionRef.current = "";
     setError("");
     setSaved(false);
     setEngine("");
     setCrisisMode(false);
 
-    // 1. Check for crisis locally (instant, no API)
     if (checkCrisis(text)) {
       setCrisisMode(true);
       setPhase("idle");
+      setReflecting(false);
       return;
     }
 
     try {
-      // 2. Try on-device SLM first
       if (slmState === "ready") {
         await generateLocally(text);
       } else {
-        // 3. Fall back to server API
         await generateViaApi(text);
       }
-
       setPhase("done");
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
       console.error(err);
 
-      // If SLM failed, try API as fallback
       if (slmState === "ready" && engine === "") {
         try {
-          reflectionRef.current = "";
           setReflection("");
           await generateViaApi(text);
           setPhase("done");
+          setReflecting(false);
           return;
-        } catch {
-          // Both failed
-        }
+        } catch { /* both failed */ }
       }
 
       setError("The stream was interrupted. Let the water settle, and try again.");
       setPhase("idle");
     } finally {
-      abortRef.current = null;
+      setReflecting(false);
     }
   };
 
@@ -184,7 +181,6 @@ export default function ReflectPage() {
   };
 
   const begin = () => {
-    abortRef.current?.abort();
     setIssue("");
     setPhase("idle");
     setPrinciple("");
@@ -202,23 +198,58 @@ export default function ReflectPage() {
     }
   };
 
+  const upgradeModel = async () => {
+    setSlmState("loading");
+    const ok = await loadModel("qwen2-0.5b");
+    setSlmState(ok ? "ready" : "error");
+    setActiveModel(getActiveModel());
+  };
+
+  const isDownloading = slmState === "loading" && downloadStatus === "downloading";
+  const isLoadingModel = slmState === "loading" && downloadStatus === "loading";
+
   return (
     <PageTransition>
       <main className="page">
-        <FloatingElements count={10} speed="slow" />
+        <FloatingElements count={12} speed="slow" />
 
         <div className="center">
           <Enso />
 
           <h1 className="prompt">what troubles you?</h1>
 
-          {/* SLM status indicator */}
+          {/* SLM status */}
           <div className="slm-status">
-            {slmState === "loading" && (
-              <span className="slm-badge slm-loading">loading on-device AI…</span>
+            {isDownloading && (
+              <div className="slm-download">
+                <span className="slm-badge slm-loading">
+                  downloading on-device AI ({downloadProgress}%)
+                </span>
+                <div className="slm-progress-bar">
+                  <div
+                    className="slm-progress-fill"
+                    style={{ width: `${downloadProgress}%` }}
+                  />
+                </div>
+              </div>
             )}
-            {slmState === "ready" && (
-              <span className="slm-badge slm-ready">on-device AI ready</span>
+            {isLoadingModel && !isDownloading && (
+              <span className="slm-badge slm-loading">loading model…</span>
+            )}
+            {slmState === "ready" && activeModel === "distilgpt2" && (
+              <div className="slm-ready-row">
+                <span className="slm-badge slm-ready">on-device AI ready</span>
+                <button
+                  type="button"
+                  className="slm-upgrade-btn"
+                  onClick={upgradeModel}
+                >
+                  upgrade quality (~200MB)
+                </button>
+              </div>
+            )}
+            {slmState === "ready" && activeModel === "qwen2-0.5b" && (
+              <span className="slm-badge slm-ready">on-device AI ready (enhanced)</span>
             )}
             {slmState === "error" && (
               <span className="slm-badge slm-fallback">using cloud AI</span>
@@ -248,28 +279,22 @@ export default function ReflectPage() {
                   reflect
                 </button>
               )}
-              {phase === "reflecting" && !reflection && (
-                <span className="settling">the water settles…</span>
+              {reflecting && !reflection && (
+                <div className="reflecting-animation">
+                  <span className="reflecting-dot" />
+                  <span className="reflecting-dot" />
+                  <span className="reflecting-dot" />
+                </div>
               )}
               {phase === "done" && (
                 <div className="done-actions">
                   {!saved && (
-                    <button
-                      type="button"
-                      className="reflect-btn"
-                      onClick={saveToJournal}
-                    >
+                    <button type="button" className="reflect-btn" onClick={saveToJournal}>
                       save to journal
                     </button>
                   )}
-                  {saved && (
-                    <span className="saved-note">saved</span>
-                  )}
-                  <button
-                    type="button"
-                    className="reflect-btn"
-                    onClick={begin}
-                  >
+                  {saved && <span className="saved-note">saved</span>}
+                  <button type="button" className="reflect-btn" onClick={begin}>
                     begin again
                   </button>
                 </div>
@@ -277,17 +302,22 @@ export default function ReflectPage() {
             </div>
           </div>
 
-          {/* Crisis mode */}
           {crisisMode && (
             <div className="crisis-card" role="alert">
-              <p className="crisis-title">You matter. Please reach out.</p>
+              <div className="crisis-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4M12 16h.01" />
+                </svg>
+              </div>
+              <p className="crisis-title">you matter. please reach out.</p>
               <p className="crisis-text">
-                What you're feeling is real, and you don't have to go through it alone.
+                what you&apos;re feeling is real, and you don&apos;t have to go through it alone.
               </p>
               <div className="crisis-resources">
                 <p><strong>988 Suicide & Crisis Lifeline</strong></p>
-                <p>Call or text <strong>988</strong> (US)</p>
-                <p><a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer">findahelpline.com</a> (International)</p>
+                <p>call or text <strong>988</strong> (US)</p>
+                <p><a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer">findahelpline.com</a> (international)</p>
               </div>
               <button type="button" className="reflect-btn" onClick={begin}>
                 begin again
@@ -318,7 +348,7 @@ export default function ReflectPage() {
 
         <footer className="foot">
           <p className="foot-note">
-            A place for reflection, not a substitute for care. In crisis, reach a
+            a place for reflection, not a substitute for care. in crisis, reach a
             person who can help — in the US, call or text 988.
           </p>
         </footer>
