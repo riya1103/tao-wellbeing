@@ -1,18 +1,12 @@
-// The offline heart of the app: a hand-authored library of Taoist reflections.
-// Every reflection is grounded in a named principle and closes with a line drawn
-// from or echoing the Tao Te Ching. This library is always available — the app
-// works fully without any API key.
+// Hand-authored Taoist reflections in simple, clear English.
+// Every reflection is grounded in a named principle and closes with a line
+// from or echoing the Tao Te Ching. Works fully without any API key.
 
 export interface Reflection {
-  /** Stable id / slug. */
   id: string;
-  /** The Taoist principle the reflection rests on. */
   principle: string;
-  /** Words that suggest this reflection fits what the person described. */
   keywords: string[];
-  /** The reflection body — calm, spacious, plain-language. */
   body: string;
-  /** A closing line, drawn from or echoing the Tao Te Ching. */
   line: string;
 }
 
@@ -25,7 +19,7 @@ export const REFLECTIONS: Reflection[] = [
       "overthink", "overthinking", "racing", "spiral", "panic", "dread",
       "future", "what if",
     ],
-    body: "Worry is the mind rehearsing a future that has not come. It runs ahead, again and again, over ground that does not yet exist. Notice that the rehearsing changes nothing — the river arrives when it arrives.\n\nWu wei is not doing nothing. It is doing without forcing, acting in accord with the moment rather than against it. What is actually in front of you right now? Tend to that, and only that. The rest is smoke.\n\nLet the thoughts pass through like weather. You do not have to follow every cloud.",
+    body: "Your mind is running ahead to a future that hasn't happened yet. It replays the same scenes, over and over, on ground that doesn't exist yet. And none of that replaying changes a thing — the river comes when it comes.\n\nWu wei means acting without forcing. Not sitting still doing nothing. Just tending to what is right in front of you, right now, instead of fighting with what-ifs.\n\nLet your thoughts come and go like clouds. You don't have to follow each one.",
     line: "Nature does not hurry, yet everything is accomplished.",
   },
   {
@@ -36,7 +30,7 @@ export const REFLECTIONS: Reflection[] = [
       "letting go", "grip", "holding on", "powerless", "helpless", "uncertain",
       "uncertainty", "unpredictable", "outcome",
     ],
-    body: "You are gripping something that was never yours to hold. Much of what troubles us lies outside our hands — the actions of others, the turning of events, the shape of tomorrow. To grip harder is only to tire the hand.\n\nThe Tao asks: what here is yours to move, and what is not? Give your care to the first. Release the second, not with resignation, but with trust that things unfold in their own time.\n\nAn open hand can receive. A clenched one cannot.",
+    body: "You are holding on to something that was never in your hands. Other people's actions, how things turn out, what tomorrow looks like — gripping harder won't change any of it. It just tires you out.\n\nThe Tao asks a simple question: what here can you actually move, and what can't you? Put your energy into the first. Let go of the second — not because you don't care, but because forcing doesn't work.\n\nAn open hand can receive. A closed fist cannot.",
     line: "The soft and yielding overcome the hard and strong.",
   },
   {
@@ -47,7 +41,7 @@ export const REFLECTIONS: Reflection[] = [
       "frustrated", "frustration", "irritated", "annoyed", "unfair", "betrayed",
       "hate",
     ],
-    body: "Anger is a fire, and fire consumes its own house first. What burns in you now may feel like strength, but it hardens you, and what is hard is easily broken.\n\nWater takes another way. It does not strike the rock; it moves around it, and in time wears it smooth. Yielding is not weakness — it is the patience that outlasts force.\n\nFeel the heat, name it, and let it cool. You need not act while the fire is high.",
+    body: "Anger is fire, and fire burns the one who holds it first. It feels strong right now, but it makes you rigid — and what is rigid breaks easily.\n\nWater does something different. It doesn't slam into the rock. It flows around it, and over time, the rock becomes smooth. Being soft isn't weakness — it's the patience that lasts longer than any force.\n\nFeel the heat. Name it. Then let it cool. You don't have to act while the fire is highest.",
     line: "Water is the softest thing, yet it wears away the hardest.",
   },
   {
@@ -58,7 +52,7 @@ export const REFLECTIONS: Reflection[] = [
       "missing", "gone", "ending", "ended", "breakup", "broke up", "divorce",
       "goodbye", "empty",
     ],
-    body: "Something has gone, and the space it left aches. This is real, and it deserves your tenderness — do not rush to fill the emptiness or explain it away.\n\nThe Tao moves in cycles: the leaf falls so the tree may rest, the old makes room for what is not yet born. This does not lessen the loss. It only reminds you that endings and beginnings are one motion, seen from different sides.\n\nGrieve as fully as you loved. Both belong to a life lived openly.",
+    body: "Something is gone, and where it used to be, there is an ache. That is real, and it deserves your kindness — don't rush to fill the space or explain it away.\n\nThe Tao moves in circles. Leaves fall so trees can rest. Old things make room for what hasn't been born yet. This doesn't take away the pain. It just reminds you that endings and beginnings are the same motion, seen from different sides.\n\nLet yourself grieve as fully as you loved. Both belong to a life lived with an open heart.",
     line: "Returning is the movement of the Tao.",
   },
   {
@@ -69,7 +63,7 @@ export const REFLECTIONS: Reflection[] = [
       "ambition", "not enough", "never enough", "prove", "success", "failing",
       "failure", "pressure", "productive", "productivity", "behind",
     ],
-    body: "You are pushing the river, trying to make it flow faster. The more you force, the more it resists, and the more tired you become. Striving has a way of pushing the very thing you want further away.\n\nThe Tao accomplishes without contending. The seed does not strain to grow; it grows because that is its nature. What would it be to trust your own unfolding — to act from fullness rather than lack?\n\nYou are already enough to begin. The rest is only patience.",
+    body: "You're pushing the river, trying to make it go faster. The harder you push, the more it pushes back, and the more tired you get.\n\nThe Tao accomplishes things without forcing them. A seed doesn't strain to grow — it grows because that's what it is. What would it feel like to trust your own unfolding? To act from enough, not from not-enough?\n\nYou are already enough to begin. The rest is just patience.",
     line: "The sage does not contend, and so no one can contend with them.",
   },
   {
@@ -80,7 +74,7 @@ export const REFLECTIONS: Reflection[] = [
       "torn", "stuck", "crossroads", "unsure", "confused", "confusion",
       "which way", "don't know what",
     ],
-    body: "You stand at a fork and cannot see the far end of either road. So you turn the choice over and over, hoping thought alone will reveal what only living can.\n\nThe Tao says: let the muddy water settle. Do not stir it with more analysis. In stillness, what is right for you tends to surface on its own — quietly, without argument.\n\nSit with the question rather than at it. Clarity is not forced; it arrives.",
+    body: "You're standing at a fork in the road, turning each option over and over, hoping thinking alone will show you the way. But some things can only be known by living them, not by thinking about them.\n\nThe Tao says: let the muddy water settle. Stop stirring it with more analysis. When you get quiet, the right path usually surfaces on its own — gently, without argument.\n\nSit with the question. Don't fight it. Clarity isn't forced — it arrives.",
     line: "Do you have the patience to wait till your mud settles and the water is clear?",
   },
   {
@@ -91,7 +85,7 @@ export const REFLECTIONS: Reflection[] = [
       "drained", "depleted", "overwhelmed", "overwhelm", "too much", "can't keep up",
       "no energy", "spent", "weary",
     ],
-    body: "You have been pouring out with nothing poured back in. A cup emptied endlessly cracks; even the deepest well runs dry when it is never allowed to fill.\n\nThe Tao honors the empty as much as the full. The hollow of the cup is what makes it useful; the space in the room is what lets you live there. Rest is not the absence of value — it is where value is restored.\n\nDo less. Let the field lie fallow. This too is the work.",
+    body: "You've been giving and giving with nothing coming back in. A cup that's never filled will crack. Even the deepest well runs dry if you never let it rain.\n\nThe Tao sees emptiness as just as important as fullness. The empty space inside a cup is what makes it useful. The open space in a room is what lets you live in it. Rest isn't doing nothing — it's how you get filled back up.\n\nDo less. Let the ground rest. This, too, is important work.",
     line: "Thirty spokes share the wheel's hub; it is the center hole that makes it useful.",
   },
   {
@@ -102,7 +96,7 @@ export const REFLECTIONS: Reflection[] = [
       "everyone else", "behind everyone", "not good enough", "inadequate",
       "social media", "others have", "left behind", "measure up",
     ],
-    body: "You are measuring your inner life against the outer surface of others, and no one wins that game — the surface is always polished, the inside always hidden.\n\nZiran means being so-of-itself: the pine does not wish to be the plum, nor the mountain envy the sea. Each thing is complete in its own nature. Your path is not late or early; it is simply yours.\n\nTurn your eyes from the crowd and back to your own quiet ground. There is nothing there to fix.",
+    body: "You're comparing your inside to everyone else's outside. No one wins that game — the outside is always polished, the inside is always hidden.\n\nZiran means being what you are, naturally. A pine tree doesn't try to be a plum tree. A mountain doesn't envy the ocean. Each thing is whole in itself. Your path isn't early or late. It's just yours.\n\nLook away from the crowd. Come back to your own quiet ground. There's nothing there that needs fixing.",
     line: "When you are content to be simply yourself, everyone will respect you.",
   },
   {
@@ -113,7 +107,7 @@ export const REFLECTIONS: Reflection[] = [
       "avoid", "avoiding", "hiding", "risk", "vulnerable", "exposed", "unsafe",
       "insecure",
     ],
-    body: "Fear draws the body tight, bracing against a blow that may never land. It wants to keep you small and still, mistaking rigidity for safety.\n\nBut what is stiff breaks in the wind, while the supple branch bends and springs back. To meet fear is not to conquer it — it is to soften around it, to breathe, to let it move through rather than lodge in you.\n\nYou can be afraid and still take the next small step. Courage is not the absence of trembling.",
+    body: "Fear tightens everything up. It braces for a hit that might never come. It wants to keep you small, and mistakes being stiff for being safe.\n\nBut stiff things break in the wind. Soft, flexible branches bend and bounce back. Facing fear isn't about beating it — it's about softening around it, breathing, letting it move through you instead of getting stuck.\n\nYou can be afraid and still take one small step. That's what courage actually looks like.",
     line: "The tree that does not bend with the wind will be broken by it.",
   },
   {
@@ -124,7 +118,7 @@ export const REFLECTIONS: Reflection[] = [
       "distracted", "distraction", "scattered", "unsettled", "agitated",
       "impatient", "impatience", "empty feeling", "numb", "adrift",
     ],
-    body: "The mind darts and paws at everything, unable to rest, sure that the next thing will finally satisfy. But chasing does not still the chaser — it only feeds the chase.\n\nThe Tao roots itself in stillness. Movement is born from it and returns to it, as the wave returns to the sea. When you stop reaching outward for a moment, you may find the calm was underneath you all along.\n\nBe still. Not forever — just now, just this breath.",
+    body: "Your mind keeps jumping from thing to thing, sure that the next thing will finally be the one that satisfies. But chasing never quiets the one who chases — it only keeps the chase going.\n\nThe Tao starts from stillness. Movement comes from it and goes back to it, like waves returning to the sea. If you stop reaching outward for just a moment, you might find the calm was under you the whole time.\n\nBe still. Not forever. Just now. Just this breath.",
     line: "Stillness is the master of unrest.",
   },
   {
@@ -135,7 +129,7 @@ export const REFLECTIONS: Reflection[] = [
       "relationship", "partner", "family", "friend", "coworker", "boss",
       "misunderstood", "blame", "criticism", "criticized",
     ],
-    body: "Two hard things meeting can only clash. In conflict we brace to win, and in winning we often lose the very connection we were fighting for.\n\nThe Tao does not contend. To yield in a quarrel is not to be defeated — it is to refuse the war entirely, to let the other's force pass by and find nothing to push against. Softness disarms what hardness only inflames.\n\nYou can hold your ground without hardening your heart. Ask what the moment truly needs, not what your pride demands.",
+    body: "When two hard things meet, they can only clash. In a fight, we brace to win — but in winning, we often lose the connection we were fighting for.\n\nThe Tao doesn't fight. Stepping back from an argument isn't losing — it's choosing not to play the game. Softness calms what hardness only makes worse.\n\nYou can stand your ground without hardening your heart. Ask what this moment actually needs — not what your pride demands.",
     line: "Because the sage does not contend, no one in the world can contend with them.",
   },
   {
@@ -146,7 +140,7 @@ export const REFLECTIONS: Reflection[] = [
       "starting over", "start over", "fresh start", "different", "everything's changing",
       "unstable", "instability",
     ],
-    body: "The ground beneath you is shifting, and you reach for something solid to hold. But nothing in this world holds still — the seeking of permanence is itself a source of suffering.\n\nThe Tao is ceaseless change, and to live well is to move with it rather than brace against it. The reed survives the flood not by standing firm but by bending with the water. What feels like losing your footing may be the current carrying you somewhere true.\n\nLoosen your grip on how things were. Meet what is becoming.",
+    body: "The ground is shifting under your feet, and you're reaching for something solid. But nothing in this world stays still — looking for things to never change is itself a source of pain.\n\nThe Tao is constant change, and living well means moving with it instead of fighting it. A reed survives a flood not by standing tall, but by bending with the water. What feels like losing your footing might be a current carrying you somewhere real.\n\nLet go of how things were. Meet what's coming.",
     line: "Life is a series of natural and spontaneous changes. Do not resist them.",
   },
   {
@@ -157,7 +151,7 @@ export const REFLECTIONS: Reflection[] = [
       "ashamed", "shame", "guilt", "guilty", "mistake", "regret", "flawed",
       "broken", "wrong with me", "disappoint",
     ],
-    body: "You have turned a hard eye on yourself, judging what you are against what you think you should be. But this harshness does not make you better — it only makes you smaller.\n\nThe Tao speaks of the uncarved block: the plain, unshaped wood that holds every possibility precisely because it is not yet forced into a single form. You do not need to be perfected. You need to be met, gently, as you are.\n\nSpeak to yourself as you would to someone you love. That, too, is the way.",
+    body: "You've been looking at yourself with a harsh eye, measuring who you are against who you think you should be. But that harshness doesn't make you better — it only makes you smaller.\n\nThe Tao speaks of the uncarved block: plain wood that holds every possibility because it hasn't been forced into one shape yet. You don't need to be fixed. You need to be met — gently — as you are.\n\nTalk to yourself the way you'd talk to someone you love. That, too, is the way.",
     line: "The sage is good to people who are good, and also good to people who are not.",
   },
   {
@@ -167,22 +161,20 @@ export const REFLECTIONS: Reflection[] = [
       "lonely", "loneliness", "alone", "isolated", "isolation", "disconnected",
       "no one", "nobody", "unloved", "unseen", "left out", "outsider", "solitude",
     ],
-    body: "A distance has opened between you and others, and in it you feel unseen. Loneliness is a real ache — not to be argued away, but to be held with kindness.\n\nYet the Tao is the thread through all things; nothing is truly separate. The valley and the peak are one mountain. Even now, apart, you belong to the same whole as everything that breathes. Solitude, met gently, can become a doorway rather than a wall.\n\nReach out where you can. And where you cannot yet, be a quiet companion to yourself.",
+    body: "There's a distance between you and others, and in that distance, you feel unseen. Loneliness is a real ache — you can't argue it away. It needs to be held gently.\n\nBut the Tao is the thread that connects everything — nothing is truly separate. The valley and the peak are the same mountain. Even when you're apart, you belong to the same world as everything that breathes. Solitude, met with kindness, can become a doorway instead of a wall.\n\nReach out where you can. And where you can't yet, be a quiet friend to yourself.",
     line: "The ten thousand things arise and are of one source.",
   },
   {
     id: "general",
     principle: "the way of water",
-    keywords: [], // fallback — matches nothing directly, used when nothing else fits
-    body: "Whatever weighs on you, notice first that you have paused to look at it. That looking is already the beginning of ease.\n\nThe Tao does not solve problems by force. It flows toward the low places, patient and soft, finding the way that offers least resistance. Perhaps what is needed now is not a harder push but a gentler one — or none at all for a moment.\n\nBreathe. Let the water settle. The way forward often shows itself only once we stop straining to see it.",
+    keywords: [],
+    body: "Whatever you're carrying, you stopped to look at it. That small act of looking is already the start of feeling lighter.\n\nThe Tao doesn't push problems away. It flows toward the low places, slow and soft, finding the path that requires the least effort. Maybe what you need right now isn't a harder push — but a gentler one. Or no push at all, just for a moment.\n\nBreathe. Let things settle. The way forward usually shows itself once we stop trying so hard to see it.",
     line: "The way is not in the sky. The way is in the heart.",
   },
 ];
 
 /**
  * Choose the reflection that best fits what the person described.
- * Simple keyword scoring over the curated library; falls back to the
- * general "way of water" reflection when nothing matches.
  */
 export function matchReflection(issue: string): Reflection {
   const text = issue.toLowerCase();
@@ -193,7 +185,6 @@ export function matchReflection(issue: string): Reflection {
     let score = 0;
     for (const kw of r.keywords) {
       if (text.includes(kw)) {
-        // Longer/multi-word keywords are stronger signals.
         score += kw.includes(" ") ? 3 : 1;
       }
     }

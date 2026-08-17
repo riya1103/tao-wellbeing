@@ -7,15 +7,17 @@ function cleanIssue(issue: string): string {
 
 export function buildSlmReply(issue: string, grounding: Reflection): string {
   const subject = cleanIssue(issue);
-  const brief = subject ? `You are carrying ${subject.toLowerCase()}.` : "You are carrying a difficult weight.";
+  const brief = subject
+    ? `You're carrying ${subject.toLowerCase()}.`
+    : "You're carrying something heavy.";
 
   return `${brief}
 
-This is not a problem to overpower. It is a current to listen to. The Tao does not ask you to fight the river; it asks you to feel where the water is pulling and move with the least resistance.
+That's real, and it matters. The Tao doesn't ask you to fight it — it asks you to feel where things are flowing and move gently with that, not against it.
 
 ${grounding.body}
 
-You do not need to solve everything in one breath. Meet the feeling plainly, then let it settle. A quieter mind is often the first honest answer.
+You don't have to sort this all out right now. Just meet the feeling as it is, then let it settle. A quieter mind is often the first honest answer.
 
 — ${grounding.line}`;
 }
