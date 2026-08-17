@@ -2,9 +2,9 @@
 
 # ☯ Tao Wellbeing
 
-**A calm, AI-powered space for reflection.**
+**a quiet place to think**
 
-*No accounts. No tracking. No cloud. No internet required.*
+*no accounts. no tracking. no cloud. just you and your thoughts.*
 
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy-on_Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/new/clone?repository-url=https://github.com/riya1103/tao-wellbeing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
@@ -15,168 +15,159 @@
 
 ---
 
-## The Problem
+## why this exists
 
-Most mental wellness apps are loud. Gamified. Clinical.
+most wellness apps want you to be productive about your feelings. streaks. badges. daily check-ins that feel like homework.
 
-They turn emotional well-being into a streak to maintain, a badge to earn, or a diagnosis to receive. They collect your data. They push notifications. They feel like work.
+this isn't that.
 
-**Tao Wellbeing is the opposite.** A quiet, minimal space where you can say what's on your mind and receive a thoughtful response — not advice, not a diagnosis, just reflection.
+this is a quiet corner of the internet where you can say what's actually on your mind — the messy, contradictory, "i don't even know why i'm upset" stuff — and get a real response. not advice. not a diagnosis. just a reflection.
 
----
-
-## What It Does
-
-| Feature | What the user gets |
-|---|---|
-| **Reflect** | Type what troubles you. Receive a calm, grounded response rooted in Taoist philosophy — explained in plain language. |
-| **Breathe** | Four guided breathing patterns with an animated circle that expands and contracts with your breath. |
-| **Be Still** | A meditation timer with ambient floating particles and a circular progress ring. |
-| **Mood** | Check in daily with five emotional states. Track how you feel over time. |
-| **Journal** | Save reflections. Browse your history. See your mood on a clean timeline. |
-| **Daily Wisdom** | A rotating Tao Te Ching quote that changes each morning. |
+built on taoist principles that have helped people for 2,500 years. explained in plain english. no jargon. no robes. just the good stuff.
 
 ---
 
-## How the AI Works
+## what you can do
+
+**reflect** — type what's weighing on you. the app listens and reflects it back through the lens of taoist wisdom. like talking to a friend who's read the tao te ching a few too many times.
+
+**breathe** — four breathing patterns with a calm, animated circle. follow it. let your shoulders drop.
+
+**be still** — a meditation timer. nothing fancy. just you and some quiet.
+
+**mood** — check in with how you're feeling. five emotions. no pressure.
+
+**journal** — your reflections, saved. your mood, over time. all on your device. i can't see it. nobody can.
+
+**daily wisdom** — a new tao te ching quote every morning. because sometimes one line is enough.
+
+---
+
+## how the reflection works
 
 ```
-You share what's on your mind
+you share what's on your mind
         ↓
-Keyword matching finds the best Taoist principle:
-  • wu wei (effortless action)         • ziran (naturalness)
-  • the softness of water              • returning (the cycle of things)
+the app finds the closest taoist principle:
+  • wu wei — letting things unfold
+  • ziran — being yourself, naturally
+  • the softness of water — gentle beats hard
+  • returning — everything comes back around
   • stillness, emptiness, non-contention
         ↓
-The principle + a curated reflection + your words are sent to the AI
+the principle + your words go to the ai
         ↓
-The AI generates a calm, personal response in plain English
+you get a calm, personal reflection
         ↓
-You tap 👍 or 👎 — feedback improves future responses
+you tap 👍 or 👎 — that's how it learns
 ```
 
-### AI Engine — The Offline-First Stack
+### the ai runs in your browser. seriously.
 
-The app picks the best available engine. **No internet? No problem.**
+here's the thing most apps won't tell you: your thoughts get sent to a server somewhere. not here.
 
-| Priority | Engine | Model | Cost | Latency | Works Offline |
-|---|---|---|---|---|---|
-| 1 | **On-device SLM** | Qwen2 0.5B (ONNX) | Free | ~2-5s | **Yes** |
-| 2 | **Groq** | Llama 3.1 8B | Free (14,400 req/day) | ~1-2s | No |
-| 3 | **Ollama** | SmolLM2 1.7B | Free (runs locally) | ~3-5s | **Yes** |
-| 4 | **Curated library** | 15 hand-authored reflections | Free | ~0s | **Yes** |
+| where the ai runs | cost | needs internet? |
+|---|---|---|
+| **your browser** (qwen2 0.5b) | free | **no** |
+| groq cloud (llama 3.1 8b) | free (14k req/day) | yes |
+| your machine via ollama | free | **no** |
+| curated reflections (fallback) | free | **no** |
 
-**The key insight:** On-device SLM runs a real language model **in your browser** using WebAssembly. No server. No API key. No data leaves your device. Works on a plane, in a tunnel, anywhere.
+the app tries to run the ai **right on your device** first. no server. no api key. no data leaves your browser. works on a plane. works in a tunnel. works where the wifi is terrible.
 
-### Crisis Detection — Always Local
+if that doesn't work, it falls back to groq (also free). and if *that* doesn't work, there are 15 hand-written reflections ready to go.
 
-Crisis language is detected **instantly** on-device before any AI call:
-
-```
-User types crisis language
-        ↓
-Local keyword detection (0ms, no API)
-        ↓
-Crisis resources shown immediately
-        ↓
-No sensitive data sent to any server
-```
-
-### The System Prompt
-
-> You are a quiet guide in the Taoist tradition. A person has shared something that is weighing on them, and you are here to reflect — not to fix. Use simple, clear English. Short sentences. Easy words. Calm and warm. Not preachy. Not clinical. Like a thoughtful friend who reads the Tao Te Ching.
+**crisis detection is always local.** if you type something that sounds like you're in trouble, the app shows crisis resources instantly. no api call. no delay. no sensitive data sent anywhere.
 
 ---
 
-## Why On-Device AI Matters
+## the ai's personality
 
-| With cloud AI | With on-device SLM |
+it's not trying to fix you. it's not a therapist. it's more like a friend who sits with you when things are hard.
+
+the system prompt says:
+
+> you are a quiet guide in the taoist tradition. a person has shared something that is weighing on them, and you are here to reflect — not to fix. use simple, clear english. short sentences. easy words. calm and warm. not preachy. not clinical. like a thoughtful friend who reads the tao te ching.
+
+that's it. no clinical language. no "i hear you." just real talk.
+
+---
+
+## does it actually work?
+
+we test every possible input against a golden dataset of 79 test cases. here's how it's doing:
+
+| what we test | pass rate |
 |---|---|
-| Needs internet | **Works anywhere** |
-| Data sent to servers | **Data never leaves your device** |
-| API costs at scale | **Free forever** |
-| Latency depends on network | **Consistent speed** |
-| Government blocks = dead app | **Uncensorable** |
+| does it pick the right taoist principle? | **42/42 (100%)** |
+| does it handle crisis language with care? | **8/8 (100%)** |
+| does it handle weird inputs (emoji, urls, single words)? | **14/14 (100%)** |
+| does it resist prompt injection and jailbreaks? | **15/15 (100%)** |
 
-**This is what "privacy first" actually looks like.**
+evals run on every push to github. if something breaks, we know immediately.
 
----
-
-## AI Quality System
-
-### Golden Dataset — 79 Test Cases
-
-Every input is tested against a curated dataset covering:
-
-| Category | Count | Examples |
-|---|---|---|
-| Normal inputs | 42 | Anxiety, grief, anger, burnout, loneliness, indecision |
-| Edge cases | 14 | Single words, emoji, URLs, code, non-English, whitespace |
-| Adversarial attacks | 15 | Prompt injection, jailbreak, abuse, format attacks |
-| Crisis scenarios | 8 | Self-harm, hopelessness, overdose |
-
-### Eval Results
-
-| Eval | What it tests | Pass Rate |
-|---|---|---|
-| Principle Matching | Does the right Taoist principle get selected? | **42/42 (100%)** |
-| Crisis Detection | Are crisis inputs handled with care? | **8/8 (100%)** |
-| Edge Cases | Does it handle vague, short, or unusual inputs? | **14/14 (100%)** |
-| Adversarial Robustness | Does it resist prompt injection and jailbreaks? | **15/15 (100%)** |
-
-### Continuous Improvement Loop
+### how it gets better
 
 ```
-User taps 👍 or 👎
+you tap 👍 or 👎
         ↓
-Negative feedback exported as JSON
+negative feedback becomes a new test case
         ↓
-Auto-fix script asks Groq to suggest new keywords
+the system tries to fix itself
         ↓
-Keywords added to matching system
+if it can't, it alerts a human
         ↓
-Evals re-run to verify improvement
-        ↓
-GitHub Actions validates on every push
-        ↓
-Deployed to production
+you get a better experience next time
 ```
 
 ---
 
-## Product Principles
+## the principles (why taoism?)
 
-| Principle | What it means |
+because sometimes the best advice is the oldest advice.
+
+- **don't force it.** let things unfold. water doesn't fight the rock — it goes around.
+- **be soft.** gentle things outlast hard things. a reed survives the storm; an oak breaks.
+- **emptiness is useful.** rest isn't laziness. it's where strength comes from.
+- **you are enough.** stop comparing. stop striving. just be.
+
+these aren't just ideas in this app. they're in every response. because they work.
+
+---
+
+## product principles
+
+| principle | what it means |
 |---|---|
-| **Offline-first** | Full AI responses without internet. On-device SLM + curated fallback. |
-| **Privacy first** | No accounts, no databases, no analytics. Everything lives in `localStorage`. No data leaves your device. |
-| **AI with guardrails** | On-device SLM generates responses, but a curated library ensures quality even if the model fails. |
-| **Continuous improvement** | User feedback flows into the golden dataset. Evals run on every push. The system self-heals for common failures. |
-| **Accessible** | Works offline. Supports screen readers. Respects `prefers-reduced-motion`. |
-| **Free forever** | No paid APIs required. On-device SLM is free. Groq free tier covers 14,400 req/day. |
+| **offline-first** | full ai responses without internet. on-device slm + curated fallback. |
+| **privacy first** | no accounts, no databases, no analytics. everything lives in your browser. |
+| **ai with guardrails** | on-device ai generates responses, but a curated library ensures quality even if the model fails. |
+| **continuous improvement** | your feedback flows into the golden dataset. evals run on every push. |
+| **accessible** | works offline. supports screen readers. respects reduced motion. |
+| **free forever** | no paid apis. on-device ai is free. groq free tier covers 14k req/day. |
 
 ---
 
-## Tech Stack
+## the tech (if you're curious)
 
-| Layer | Technology | Why |
+| layer | what | why |
 |---|---|---|
-| **Framework** | Next.js 15 | Server components, API routes, streaming |
-| **Language** | TypeScript | Type safety, better DX |
-| **UI** | React 19 | Component model, hooks |
-| **Styling** | Vanilla CSS | No framework overhead, full control |
-| **AI (on-device)** | Qwen2 0.5B (ONNX Runtime) | Runs in browser, free, private |
-| **AI (hosted)** | Groq + Llama 3.1 8B | Free, fast, OpenAI-compatible API |
-| **AI (local)** | Ollama + SmolLM2 | Free, offline, privacy-first |
-| **Offline ML** | DistilBERT (Xenova) | Zero-shot classification, runs in browser |
-| **Storage** | localStorage | No server needed, privacy-first |
-| **CI/CD** | GitHub Actions + Vercel | Free for public repos |
+| framework | next.js 15 | fast, modern, great for streaming |
+| language | typescript | catches bugs before they happen |
+| ui | react 19 | component model, hooks |
+| styling | vanilla css | no framework overhead |
+| ai (on-device) | qwen2 0.5b (onnx) | runs in browser, free, private |
+| ai (hosted) | groq + llama 3.1 8b | free, fast |
+| ai (local) | ollama + smollm2 | free, offline |
+| offline ml | distilbert | zero-shot classification, runs in browser |
+| storage | localStorage | no server needed |
+| ci/cd | github actions + vercel | free for public repos |
 
-**Monthly cost: $0**
+**monthly cost: $0.** literally zero. the on-device model is free. groq has a generous free tier. vercel hosts it for free.
 
 ---
 
-## Quick Start
+## get started
 
 ```bash
 git clone https://github.com/riya1103/tao-wellbeing.git
@@ -185,106 +176,95 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:3000**
+open **http://localhost:3000**
 
-### Free AI on Vercel
+### free ai on vercel
 
-1. Get a free API key at [console.groq.com](https://console.groq.com) (no credit card)
-2. In Vercel → your project → **Settings** → **Environment Variables**
-3. Add `GROQ_API_KEY` = your key
-4. Redeploy
+1. get a free api key at [console.groq.com](https://console.groq.com) (no credit card)
+2. in vercel → your project → settings → environment variables
+3. add `GROQ_API_KEY` = your key
+4. redeploy
 
-### Free AI on your machine
+### free ai on your machine
 
 ```bash
-# Install Ollama: https://ollama.com
+# install ollama: https://ollama.com
 ollama pull smollm2
 npm run dev
 ```
 
-### Run Evals
+### run the tests
 
 ```bash
-npm run eval              # all evals
-npm run eval:principle    # principle matching
-npm run eval:crisis       # crisis detection
-npm run eval:quality      # LLM-as-judge (needs GROQ_API_KEY)
-npm run eval -- --history # view score trends
+npm run eval              # everything
+npm run eval:principle    # does it pick the right principle?
+npm run eval:crisis       # does it handle crisis language?
+npm run eval:quality      # is the response good? (needs groq key)
+npm run eval -- --history # see how scores trend over time
 npm run eval:fix          # auto-fix keyword failures
 ```
 
 ---
 
-## Project Structure
+## the file tree
 
 ```
 tao-wellbeing/
 ├── app/
-│   ├── page.tsx                 ← Home
-│   ├── reflect/page.tsx         ← Reflection tool (on-device SLM + streaming)
-│   ├── breathe/page.tsx         ← Breathing exercises
-│   ├── stillness/page.tsx       ← Meditation timer
-│   ├── journal/page.tsx         ← History, mood timeline, feedback
-│   └── api/reflect/route.ts     ← Streaming reflection API (Groq/Ollama/Anthropic)
+│   ├── page.tsx                 ← home
+│   ├── reflect/page.tsx         ← reflection tool (on-device ai + streaming)
+│   ├── breathe/page.tsx         ← breathing exercises
+│   ├── stillness/page.tsx       ← meditation timer
+│   ├── journal/page.tsx         ← history, mood, feedback
+│   └── api/reflect/route.ts     ← streaming reflection api (groq/ollama)
 ├── components/
-│   ├── FeedbackButton.tsx       ← Thumbs up/down
-│   ├── FeedbackExport.tsx       ← Export feedback + stats
-│   ├── BreathingCircle.tsx      ← Animated breathing guide
-│   ├── MeditationTimer.tsx      ← Timer with SVG ring
-│   └── Nav.tsx                  ← Bottom navigation
+│   ├── FeedbackButton.tsx       ← thumbs up/down
+│   ├── FeedbackExport.tsx       ← export feedback + stats
+│   ├── BreathingCircle.tsx      ← animated breathing guide
+│   ├── MeditationTimer.tsx      ← timer with svg ring
+│   └── Nav.tsx                  ← bottom navigation
 ├── lib/
-│   ├── slm-browser.ts           ← On-device SLM (Qwen2 0.5B via ONNX)
-│   ├── prompt.ts                ← AI system prompt
-│   ├── reflections.ts           ← 15 curated Taoist reflections
-│   ├── feedback.ts              ← Anonymous feedback storage
-│   ├── distilbert.ts            ← Offline intent matching
+│   ├── slm-browser.ts           ← on-device slm (qwen2 0.5b via onnx)
+│   ├── prompt.ts                ← ai system prompt
+│   ├── reflections.ts           ← 15 curated taoist reflections
+│   ├── feedback.ts              ← anonymous feedback storage
+│   ├── distilbert.ts            ← offline intent matching
 │   └── storage.ts               ← localStorage persistence
 ├── tests/
 │   ├── golden-dataset.ts        ← 79 test cases
-│   ├── run-evals.ts             ← Eval runner + history
-│   ├── auto-fix.ts              ← Auto-fix keyword failures
-│   └── import-feedback.ts       ← Import feedback → golden dataset
-├── .github/workflows/evals.yml  ← CI: evals + auto-fix
+│   ├── run-evals.ts             ← eval runner + history
+│   ├── auto-fix.ts              ← auto-fix keyword failures
+│   └── import-feedback.ts       ← import feedback → golden dataset
+├── .github/workflows/evals.yml  ← ci: evals + auto-fix
 └── public/
 ```
 
 ---
 
-## Why Taoism?
+## crisis resources
 
-Most wellness apps borrow from CBT or Buddhist mindfulness.
+this is a space for reflection, not a substitute for care.
 
-Taoism offers something different:
+if you're in crisis, please reach out:
 
-- **Don't force it.** Let things unfold.
-- **Be like water.** Soft things outlast hard things.
-- **Emptiness has value.** Rest isn't laziness — it's where strength returns.
-- **You are enough.** Stop comparing. Start being.
-
-These aren't just ideas. They're the foundation of every response this app gives.
-
----
-
-## PWA Ready
-
-Works as a home screen app on iOS and Android. No app store needed.
-
----
-
-## Crisis Resources
-
-This is a space for reflection, not a substitute for professional care.
-
-| Region | Contact |
+| where | contact |
 |---|---|
-| 🇺🇸 US | Call or text **988** |
-| 🌍 International | [findahelpline.com](https://findahelpline.com) |
+| 🇺🇸 us | call or text **988** |
+| 🌍 international | [findahelpline.com](https://findahelpline.com) |
+
+the app detects crisis language locally and shows these resources instantly. no data is sent anywhere.
+
+---
+
+## pwa ready
+
+add it to your home screen. works on ios and android. no app store needed.
 
 ---
 
 <div align="center">
 
-*"The journey of a thousand miles begins beneath one's feet."*
-— Lao Tzu, Tao Te Ching
+*"the journey of a thousand miles begins beneath one's feet."*
+— lao tzu, tao te ching
 
 </div>
