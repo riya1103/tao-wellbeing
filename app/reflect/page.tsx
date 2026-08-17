@@ -19,6 +19,7 @@ export default function ReflectPage() {
   const [saved, setSaved] = useState(false);
   const [engine, setEngine] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+  const reflectionRef = useRef("");
 
   const submit = async () => {
     const text = issue.trim();
@@ -27,6 +28,7 @@ export default function ReflectPage() {
     setPhase("reflecting");
     setPrinciple("");
     setReflection("");
+    reflectionRef.current = "";
     setError("");
     setSaved(false);
     setEngine("");
@@ -48,19 +50,19 @@ export default function ReflectPage() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = "";
       let headerParsed = false;
+      let streamBuffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        streamBuffer += decoder.decode(value, { stream: true });
 
         if (!headerParsed) {
-          const idx = buffer.indexOf(DELIM);
+          const idx = streamBuffer.indexOf(DELIM);
           if (idx === -1) continue;
-          const header = buffer.slice(0, idx);
-          buffer = buffer.slice(idx + 1);
+          const header = streamBuffer.slice(0, idx);
+          streamBuffer = streamBuffer.slice(idx + 1);
           try {
             const meta = JSON.parse(header);
             if (meta?.principle) setPrinciple(meta.principle);
@@ -71,12 +73,15 @@ export default function ReflectPage() {
           headerParsed = true;
         }
 
-        if (headerParsed && buffer) {
-          setReflection((prev) => prev + buffer);
-          buffer = "";
+        if (headerParsed && streamBuffer.length > 0) {
+          const chunk = streamBuffer;
+          reflectionRef.current += chunk;
+          setReflection(reflectionRef.current);
+          streamBuffer = "";
         }
       }
 
+      setReflection(reflectionRef.current);
       setPhase("done");
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
