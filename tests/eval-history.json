@@ -243,5 +243,59 @@
       "total": 81,
       "pct": 98
     }
+  },
+  {
+    "timestamp": "2026-08-18T06:44:59.906Z",
+    "commit": "804e5ed",
+    "suites": [
+      {
+        "name": "Principle Matching",
+        "passed": 42,
+        "failed": 0,
+        "total": 42,
+        "pct": 100
+      },
+      {
+        "name": "Crisis Detection",
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "pct": 100
+      },
+      {
+        "name": "Edge Cases (Principle Matching)",
+        "passed": 14,
+        "failed": 0,
+        "total": 14,
+        "pct": 100
+      },
+      {
+        "name": "Adversarial Robustness (Basic)",
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "pct": 100
+      },
+      {
+        "name": "Response Quality (LLM-as-judge)",
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "pct": 0
+      },
+      {
+        "name": "Adversarial Robustness (LLM)",
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "pct": 0
+      }
+    ],
+    "overall": {
+      "passed": 79,
+      "failed": 2,
+      "total": 81,
+      "pct": 98
+    }
   }
 ]

@@ -23,7 +23,7 @@ async function isGroqAvailable(): Promise<boolean> {
 
 async function streamGroq(
   controller: ReadableStreamDefaultController,
-  prompt: string,
+  messages: { role: string; content: string }[],
   grounding: ReturnType<typeof matchReflection>,
 ) {
   const enc = encoder();
@@ -40,7 +40,7 @@ async function streamGroq(
       model: GROQ_MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: prompt },
+        ...messages,
       ],
       stream: true,
       temperature: 0.85,
@@ -59,7 +59,6 @@ async function streamGroq(
     const { done, value } = await reader.read();
     if (done) break;
     const chunk = decoder.decode(value, { stream: true });
-    // SSE: lines starting with "data: {...}"
     for (const line of chunk.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed || !trimmed.startsWith("data:")) continue;
@@ -91,20 +90,23 @@ async function isOllamaAvailable(): Promise<boolean> {
 
 async function streamOllama(
   controller: ReadableStreamDefaultController,
-  prompt: string,
+  messages: { role: string; content: string }[],
   grounding: ReturnType<typeof matchReflection>,
 ) {
   const enc = encoder();
   const header = JSON.stringify({ principle: grounding.principle, engine: "ollama" });
   controller.enqueue(enc.encode(header + DELIM));
 
-  const res = await fetch(`${OLLAMA_URL}/api/generate`, {
+  // Ollama uses /api/chat for multi-turn
+  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: OLLAMA_MODEL,
-      system: SYSTEM_PROMPT,
-      prompt,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...messages,
+      ],
       stream: true,
     }),
   });
@@ -124,7 +126,9 @@ async function streamOllama(
       if (!line.trim()) continue;
       try {
         const obj = JSON.parse(line);
-        if (obj.response) controller.enqueue(enc.encode(obj.response));
+        if (obj.message?.content) {
+          controller.enqueue(enc.encode(obj.message.content));
+        }
       } catch {
         /* partial line */
       }
@@ -181,9 +185,11 @@ function serveFallback(
 
 export async function POST(req: Request) {
   let issue = "";
+  let history: { role: string; content: string }[] = [];
   try {
     const body = await req.json();
     issue = typeof body?.issue === "string" ? body.issue : "";
+    history = Array.isArray(body?.history) ? body.history : [];
   } catch {
     return new Response("Invalid request.", { status: 400 });
   }
@@ -195,6 +201,12 @@ export async function POST(req: Request) {
   if (issue.length > 4000) {
     issue = issue.slice(0, 4000);
   }
+
+  // Build the messages array: history + latest user message
+  const messages = [
+    ...history.slice(-20), // Keep last 20 messages for context
+    { role: "user", content: issue },
+  ];
 
   const grounding = matchReflection(issue);
   const hasAnthropicKey =
@@ -209,15 +221,13 @@ export async function POST(req: Request) {
     }
   }
 
-  const prompt = buildUserPrompt(issue, localGrounding);
-
   // 1. Groq (free hosted LLM — best for Vercel)
   if (await isGroqAvailable()) {
     const stream = new ReadableStream({
       async start(controller) {
         let emittedText = false;
         try {
-          await streamGroq(controller, prompt, localGrounding);
+          await streamGroq(controller, messages, localGrounding);
           emittedText = true;
           controller.close();
         } catch (err) {
@@ -237,7 +247,7 @@ export async function POST(req: Request) {
       async start(controller) {
         let emittedText = false;
         try {
-          await streamOllama(controller, prompt, localGrounding);
+          await streamOllama(controller, messages, localGrounding);
           emittedText = true;
           controller.close();
         } catch (err) {
@@ -270,7 +280,7 @@ export async function POST(req: Request) {
             max_tokens: 1024,
             thinking: { type: "adaptive" },
             system: SYSTEM_PROMPT,
-            messages: [{ role: "user", content: prompt }],
+            messages: messages as { role: "user" | "assistant"; content: string }[],
           });
 
           messageStream.on("text", (delta) => {
